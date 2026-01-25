@@ -1,0 +1,213 @@
+import { describe, it, expect } from 'vitest';
+import {
+  getAgentContract,
+  ALL_AGENT_CONTRACTS,
+  AGENT_MODEL_ROUTING,
+  AGENT_COST_CAPS,
+  AGENT_FRAMEWORK_REQUIREMENTS,
+  RESEARCH_AGENT_CONTRACT,
+  STRATEGY_FUNNEL_AGENT_CONTRACT,
+  COPY_MESSAGING_AGENT_CONTRACT,
+  AUTOMATION_CRM_AGENT_CONTRACT,
+  QUALITY_CONTROL_AGENT_CONTRACT,
+  ResearchAgentInputSchema,
+  shouldBlock,
+} from './contracts/index.js';
+
+describe('Agent Contracts', () => {
+  it('has all 5 required agents defined', () => {
+    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(5);
+    expect(ALL_AGENT_CONTRACTS['research-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['strategy-funnel-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['copy-messaging-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['automation-crm-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['quality-control-agent']).toBeDefined();
+  });
+
+  it('getAgentContract returns correct contract', () => {
+    const contract = getAgentContract('research-agent');
+    expect(contract).toBe(RESEARCH_AGENT_CONTRACT);
+    expect(contract?.agentId).toBe('research-agent');
+  });
+
+  it('getAgentContract returns undefined for unknown agent', () => {
+    const contract = getAgentContract('unknown-agent');
+    expect(contract).toBeUndefined();
+  });
+
+  describe('Contract Structure', () => {
+    const contracts = [
+      RESEARCH_AGENT_CONTRACT,
+      STRATEGY_FUNNEL_AGENT_CONTRACT,
+      COPY_MESSAGING_AGENT_CONTRACT,
+      AUTOMATION_CRM_AGENT_CONTRACT,
+      QUALITY_CONTROL_AGENT_CONTRACT,
+    ];
+
+    it.each(contracts)('$agentId has required fields', (contract) => {
+      expect(contract.agentId).toBeDefined();
+      expect(contract.name).toBeDefined();
+      expect(contract.description).toBeDefined();
+      expect(contract.capabilities).toBeInstanceOf(Array);
+      expect(contract.capabilities.length).toBeGreaterThan(0);
+      expect(contract.constraints).toBeInstanceOf(Array);
+      expect(contract.constraints.length).toBeGreaterThan(0);
+      expect(contract.maxOutputTokens).toBeGreaterThan(0);
+    });
+  });
+
+  describe('No Overlapping Responsibilities', () => {
+    it('Research agent does NOT create strategy', () => {
+      const constraints = RESEARCH_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+      expect(constraints).toContain('not');
+      expect(constraints).toContain('strategy');
+    });
+
+    it('Strategy agent does NOT write copy', () => {
+      const constraints = STRATEGY_FUNNEL_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+      expect(constraints).toContain('not');
+      expect(constraints).toContain('copy');
+    });
+
+    it('Copy agent does NOT make strategic decisions', () => {
+      const constraints = COPY_MESSAGING_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+      expect(constraints).toContain('not');
+      expect(constraints).toContain('strateg');
+    });
+
+    it('Automation agent does NOT execute automations', () => {
+      const constraints = AUTOMATION_CRM_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+      expect(constraints).toContain('not');
+      expect(constraints).toContain('execute');
+    });
+
+    it('QC agent does NOT modify content', () => {
+      const constraints = QUALITY_CONTROL_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+      expect(constraints).toContain('not');
+      expect(constraints).toContain('modify');
+    });
+  });
+});
+
+describe('LLM Routing', () => {
+  it('all agents have model routing defined', () => {
+    for (const agentId of Object.keys(ALL_AGENT_CONTRACTS)) {
+      expect(AGENT_MODEL_ROUTING[agentId]).toBeDefined();
+    }
+  });
+
+  it('routes Research/Strategy/QC to Claude Sonnet', () => {
+    expect(AGENT_MODEL_ROUTING['research-agent']).toBe('claude-3-sonnet');
+    expect(AGENT_MODEL_ROUTING['strategy-funnel-agent']).toBe('claude-3-sonnet');
+    expect(AGENT_MODEL_ROUTING['quality-control-agent']).toBe('claude-3-sonnet');
+  });
+
+  it('routes Copy to GPT-4', () => {
+    expect(AGENT_MODEL_ROUTING['copy-messaging-agent']).toBe('gpt-4');
+  });
+
+  it('routes Automation to GPT-4o-mini', () => {
+    expect(AGENT_MODEL_ROUTING['automation-crm-agent']).toBe('gpt-4o-mini');
+  });
+});
+
+describe('Cost Caps', () => {
+  it('all agents have cost caps defined', () => {
+    for (const agentId of Object.keys(ALL_AGENT_CONTRACTS)) {
+      expect(AGENT_COST_CAPS[agentId]).toBeDefined();
+      expect(AGENT_COST_CAPS[agentId]).toBeGreaterThan(0);
+    }
+  });
+
+  it('Automation agent has lowest cost cap (fast model)', () => {
+    const automationCap = AGENT_COST_CAPS['automation-crm-agent']!;
+    const copyCap = AGENT_COST_CAPS['copy-messaging-agent']!;
+    expect(automationCap).toBeLessThan(copyCap);
+  });
+});
+
+describe('Framework Requirements', () => {
+  it('all agents have framework requirements defined', () => {
+    for (const agentId of Object.keys(ALL_AGENT_CONTRACTS)) {
+      expect(AGENT_FRAMEWORK_REQUIREMENTS[agentId]).toBeDefined();
+      expect(AGENT_FRAMEWORK_REQUIREMENTS[agentId]!.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('Strategy agent requires offer-economics framework', () => {
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['strategy-funnel-agent']).toContain('offer-economics');
+  });
+
+  it('Copy agent requires persuasion framework', () => {
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['copy-messaging-agent']).toContain('persuasion');
+  });
+
+  it('QC agent has access to all frameworks', () => {
+    const qcFrameworks = AGENT_FRAMEWORK_REQUIREMENTS['quality-control-agent']!;
+    expect(qcFrameworks).toContain('offer-economics');
+    expect(qcFrameworks).toContain('market-awareness');
+    expect(qcFrameworks).toContain('persuasion');
+    expect(qcFrameworks).toContain('funnel-design');
+  });
+});
+
+describe('Input Validation', () => {
+  it('ResearchAgentInputSchema validates correct input', () => {
+    const validInput = {
+      projectId: '550e8400-e29b-41d4-a716-446655440000',
+      researchType: 'competitor-analysis',
+      subject: 'Acme Corp',
+      depth: 'standard',
+    };
+
+    const result = ResearchAgentInputSchema.safeParse(validInput);
+    expect(result.success).toBe(true);
+  });
+
+  it('ResearchAgentInputSchema rejects invalid projectId', () => {
+    const invalidInput = {
+      projectId: 'not-a-uuid',
+      researchType: 'competitor-analysis',
+      subject: 'Acme Corp',
+    };
+
+    const result = ResearchAgentInputSchema.safeParse(invalidInput);
+    expect(result.success).toBe(false);
+  });
+
+  it('ResearchAgentInputSchema rejects invalid researchType', () => {
+    const invalidInput = {
+      projectId: '550e8400-e29b-41d4-a716-446655440000',
+      researchType: 'invalid-type',
+      subject: 'Acme Corp',
+    };
+
+    const result = ResearchAgentInputSchema.safeParse(invalidInput);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('QC Blocking Logic', () => {
+  it('blocks on critical violations', () => {
+    const violations = [{ severity: 'critical' as const }];
+    expect(shouldBlock(violations, false)).toBe(true);
+    expect(shouldBlock(violations, true)).toBe(true);
+  });
+
+  it('blocks on major violations in strict mode', () => {
+    const violations = [{ severity: 'major' as const }];
+    expect(shouldBlock(violations, true)).toBe(true);
+    expect(shouldBlock(violations, false)).toBe(false);
+  });
+
+  it('does not block on minor violations', () => {
+    const violations = [{ severity: 'minor' as const }];
+    expect(shouldBlock(violations, false)).toBe(false);
+    expect(shouldBlock(violations, true)).toBe(false);
+  });
+
+  it('does not block on suggestions', () => {
+    const violations = [{ severity: 'suggestion' as const }];
+    expect(shouldBlock(violations, true)).toBe(false);
+  });
+});

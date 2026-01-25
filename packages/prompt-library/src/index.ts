@@ -10,7 +10,7 @@ export {
   getRulesByCategory,
 } from './global-rules.js';
 
-// Frameworks
+// Legacy Frameworks (placeholders)
 export {
   MARKETING_FRAMEWORK,
   TECHNICAL_DOCS_FRAMEWORK,
@@ -19,3 +19,19 @@ export {
   getDefaultFrameworks,
   getFrameworkByName,
 } from './frameworks.js';
+
+// Week 3 Frameworks (Hormozi + Psychology)
+export {
+  OFFER_ECONOMICS_FRAMEWORK,
+  OFFER_ECONOMICS_VERSION,
+  MARKET_AWARENESS_FRAMEWORK,
+  MARKET_AWARENESS_VERSION,
+  PERSUASION_FRAMEWORK,
+  PERSUASION_VERSION,
+  FUNNEL_DESIGN_FRAMEWORK,
+  FUNNEL_DESIGN_VERSION,
+  ALL_FRAMEWORKS,
+  getFramework,
+  getFrameworks,
+  FRAMEWORK_VERSIONS,
+} from './frameworks/index.js';

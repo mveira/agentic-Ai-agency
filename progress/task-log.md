@@ -184,11 +184,67 @@ Notes:
 ## Week 3 – Agents & Intelligence
 
 ### Task: Add Hormozi/Psychology framework blocks to prompt-library
-- **Status:** DOING
-- **Files to create:**
+- **Status:** DONE
+- **Files created:**
   - packages/prompt-library/src/frameworks/offer-economics.ts
   - packages/prompt-library/src/frameworks/market-awareness.ts
   - packages/prompt-library/src/frameworks/persuasion.ts
   - packages/prompt-library/src/frameworks/funnel-design.ts
+  - packages/prompt-library/src/frameworks/index.ts
+- **Features:**
+  - Hormozi Value Equation (offer-economics)
+  - Schwartz Awareness Levels (market-awareness)
+  - PAS/AIDA/Proof Hierarchy (persuasion)
+  - UX/CTA rules (funnel-design)
+  - All frameworks versioned for cache invalidation
+
+### Task: Define agent contracts
+- **Status:** DONE
+- **Files created:**
+  - packages/agent-core/src/contracts/research-agent.ts
+  - packages/agent-core/src/contracts/strategy-funnel-agent.ts
+  - packages/agent-core/src/contracts/copy-messaging-agent.ts
+  - packages/agent-core/src/contracts/automation-crm-agent.ts
+  - packages/agent-core/src/contracts/quality-control-agent.ts
+  - packages/agent-core/src/contracts/index.ts
+- **Features:**
+  - Each agent has: purpose, capabilities, constraints, input/output schemas
+  - No overlapping responsibilities enforced via constraints
+  - Per-agent model routing (Sonnet/GPT-4/GPT-4o-mini)
+  - Per-agent cost caps
+
+### Task: Implement multi-LLM routing
+- **Status:** DONE
+- **Files created:**
+  - packages/agent-core/src/llm-router.ts
+- **Features:**
+  - Routes Research/Strategy/QC → Claude Sonnet
+  - Routes Copy → GPT-4
+  - Routes Automation → GPT-4o-mini
+  - Downgrade logic when cost cap exceeded
+  - Cross-provider fallback support
+
+### Task: Implement specialized agent runner with QC enforcement
+- **Status:** DONE
+- **Files created:**
+  - packages/agent-core/src/specialized-runner.ts
+- **Features:**
+  - Contract enforcement before execution
+  - Framework injection based on agent requirements
+  - QC runs after Strategy and Copy agents
+  - QC can block execution if violations found
+  - Per-agent cost tracking
+
+### Task: Add tests for Week 3 components
+- **Status:** DONE
+- **Tests added:**
+  - packages/agent-core/src/contracts.test.ts
+  - packages/agent-core/src/llm-router.test.ts
+- **Coverage:**
+  - All 5 agents have contracts
+  - No overlapping responsibilities
+  - LLM routing selects correct model
+  - Cost caps enforced
+  - QC blocking logic works
 
 ---

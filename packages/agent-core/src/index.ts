@@ -39,3 +39,20 @@ export { MockLLMAdapter, createMockAdapter } from './mock-llm.js';
 // Agent Runner
 export { AgentRunner } from './agent-runner.js';
 export type { RunTaskParams } from './agent-runner.js';
+
+// Specialized Agent Runner (Week 3)
+export { SpecializedAgentRunner, createMockSpecializedRunner } from './specialized-runner.js';
+export type { SpecializedRunnerConfig, SpecializedRunResult } from './specialized-runner.js';
+
+// LLM Router (Week 3)
+export {
+  LLMRouter,
+  createMockRouter,
+  MODEL_TIERS,
+  MODEL_DOWNGRADE_PATH,
+  CROSS_PROVIDER_FALLBACK,
+} from './llm-router.js';
+export type { RouterConfig, RouteResult } from './llm-router.js';
+
+// Agent Contracts (Week 3)
+export * from './contracts/index.js';
