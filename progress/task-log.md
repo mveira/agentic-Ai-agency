@@ -19,6 +19,59 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ---
 
+## Week 4.2 – GHL Actions: Move Stage + Trigger Workflow
+
+### Task: Add GHL action schemas, adapter, and executor
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/ghl-actions.ts (created)
+  - packages/agent-core/src/project-config.ts (extended with allowlists)
+  - packages/agent-core/src/index.ts (modified)
+- **Tests added/updated:**
+  - packages/agent-core/src/ghl-actions.test.ts (21 tests)
+- **Commands run:**
+  - pnpm test (153 tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - MoveStageAction: opportunityId, pipelineId, stageId, reason
+  - TriggerWorkflowAction: contactId, workflowId, reason
+  - GHLAdapter interface: getPipelines, updateOpportunityStage, addContactToWorkflow
+  - ActionExecutor: dryRun, allowlists, idempotency via payloadHash
+  - MockGHLAdapter for testing
+  - ProjectConfig extended with allowlists.pipelineStages and allowlists.workflowIds
+
+### Task: Add API endpoints for project config and sync
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/project-config.ts (created)
+  - apps/api/src/index.ts (modified)
+- **Tests added/updated:**
+  - N/A (route wiring, tested via integration)
+- **Commands run:**
+  - pnpm typecheck (passed)
+  - pnpm lint (passed)
+- **Notes / blockers:**
+  - GET /api/projects/:id/config
+  - PUT /api/projects/:id/config
+  - POST /api/projects/:id/sync/pipelines
+  - POST /api/projects/:id/sync/workflows
+
+### Task: Add dashboard settings page
+- **Status:** DONE
+- **Files touched:**
+  - apps/dashboard/src/app/projects/[id]/settings/page.tsx (created)
+- **Tests added/updated:**
+  - N/A (UI scaffold)
+- **Commands run:**
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Toggles for dryRun, move_stage, trigger_workflow
+  - View allowlisted stages/workflows
+  - Sync buttons (disabled, wired in future)
+
+---
+
 ## Week 4.1 – Parallel Rollout Controls
 
 ### Task: Add project configuration for rollout controls

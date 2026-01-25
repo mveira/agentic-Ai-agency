@@ -40,6 +40,23 @@ Impact:
 Date:
 [Today's date]
 
+### Decision: GHL action executor with allowlists and idempotency (Week 4.2)
+- **Reason:** Need safe, controlled execution of GHL side effects (pipeline moves, workflow triggers) with zero client risk
+- **Implementation:**
+  - Discriminated union schema for GHL actions (move_stage, trigger_workflow)
+  - GHLAdapter interface for testability (mock for tests, real for production)
+  - ActionExecutor enforces: action enablement → allowlist → dryRun → idempotency → execute
+  - payloadHash prevents duplicate executions
+  - ProjectConfig extended with allowlists (pipelineStages, workflowIds)
+  - API endpoints for config management and pipeline/workflow sync
+- **Alternatives considered:**
+  - Direct GHL API calls without executor (no safety layer)
+  - Queue-based execution (adds infrastructure complexity at this stage)
+- **Impact:**
+  - Same webhook produces different behavior per project
+  - Client projects log intended actions; agency projects execute them
+  - Unknown stages/workflows are blocked before reaching GHL API
+
 ### Decision: Parallel rollout via project-level execution guards (Week 4.1)
 - **Reason:** Agency and client CRMs need to run the same agents with different execution behavior for safe parallel rollout
 - **Implementation:**

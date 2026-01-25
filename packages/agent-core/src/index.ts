@@ -61,3 +61,21 @@ export * from './contracts/index.js';
 export { checkAgentExecution, checkActionExecution, formatGuardLog } from './execution-guard.js';
 export { ProjectConfigSchema } from './project-config.js';
 export type { ProjectConfig, BlockedReason, ExecutionGuardResult } from './project-config.js';
+
+// GHL Actions (Week 4.2)
+export {
+  ActionExecutor,
+  MockGHLAdapter,
+  MoveStageActionSchema,
+  TriggerWorkflowActionSchema,
+  GHLActionSchema,
+  computePayloadHash,
+} from './ghl-actions.js';
+export type {
+  GHLAction,
+  MoveStageAction,
+  TriggerWorkflowAction,
+  GHLAdapter,
+  GHLPipeline,
+  ActionExecutionResult,
+} from './ghl-actions.js';
