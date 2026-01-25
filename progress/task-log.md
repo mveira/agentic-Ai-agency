@@ -150,4 +150,17 @@ Segment: Week 1 – Foundation
   - AgentConfig
   - PromptTemplate
 
+### Task: Verify foundation setup
+- **Status:** DONE
+- **Verification:**
+  - pnpm install: SUCCESS (1448 packages installed)
+  - pnpm test (telemetry): 25 tests passed
+  - pnpm test (agent-core): 24 tests passed
+  - pnpm test (prompt-library): 4 tests passed
+- **Tests verified:**
+  - estimateCost() unit tests
+  - Budget overrun blocks execution
+  - Missing question bank fails fast
+  - Output schema enforcement
+
 ---
