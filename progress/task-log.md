@@ -29,4 +29,29 @@ Segment: Week 1 – Foundation
   - .eslintrc.cjs
 - **Tests:** N/A (infrastructure)
 
+### Task: Implement telemetry package
+- **Status:** DONE
+- **Files created:**
+  - packages/telemetry/package.json
+  - packages/telemetry/tsconfig.json
+  - packages/telemetry/vitest.config.ts
+  - packages/telemetry/src/types.ts
+  - packages/telemetry/src/pricing.ts
+  - packages/telemetry/src/cost.ts
+  - packages/telemetry/src/store.ts
+  - packages/telemetry/src/record.ts
+  - packages/telemetry/src/spend.ts
+  - packages/telemetry/src/budget.ts
+  - packages/telemetry/src/index.ts
+- **Tests added:**
+  - packages/telemetry/src/cost.test.ts
+  - packages/telemetry/src/record.test.ts
+  - packages/telemetry/src/spend.test.ts
+  - packages/telemetry/src/budget.test.ts
+- **Functions implemented:**
+  - estimateCost() - calculates cost from tokens and model pricing
+  - recordTaskRun() - records task run with auto-calculated cost
+  - getProjectSpend() - gets daily/monthly/total spend
+  - budgetCheck() - validates task against budget limits
+
 ---
