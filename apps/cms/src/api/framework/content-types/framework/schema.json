@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "frameworks",
+  "info": {
+    "singularName": "framework",
+    "pluralName": "frameworks",
+    "displayName": "Framework",
+    "description": "Marketing and business frameworks for agent prompts"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "content": {
+      "type": "richtext",
+      "required": true
+    },
+    "priority": {
+      "type": "integer",
+      "default": 50,
+      "min": 1,
+      "max": 100
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": ["marketing", "technical", "ecommerce", "communication", "custom"],
+      "default": "custom"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

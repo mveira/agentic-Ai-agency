@@ -1,0 +1,21 @@
+{
+  "name": "@agency/cms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Strapi CMS for agency intelligence and prompt templates",
+  "scripts": {
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "build": "strapi build",
+    "strapi": "strapi"
+  },
+  "dependencies": {
+    "@strapi/strapi": "^4.21.0",
+    "@strapi/plugin-users-permissions": "^4.21.0",
+    "pg": "^8.11.0"
+  },
+  "engines": {
+    "node": ">=18.0.0 <=20.x.x",
+    "npm": ">=6.0.0"
+  }
+}

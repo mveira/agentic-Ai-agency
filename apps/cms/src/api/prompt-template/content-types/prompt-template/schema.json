@@ -1,0 +1,53 @@
+{
+  "kind": "collectionType",
+  "collectionName": "prompt_templates",
+  "info": {
+    "singularName": "prompt-template",
+    "pluralName": "prompt-templates",
+    "displayName": "Prompt Template",
+    "description": "Reusable prompt templates for agent tasks"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "template": {
+      "type": "richtext",
+      "required": true
+    },
+    "variables": {
+      "type": "json"
+    },
+    "taskType": {
+      "type": "string",
+      "required": true
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": ["content", "analysis", "generation", "transformation", "custom"],
+      "default": "custom"
+    },
+    "agent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::agent-config.agent-config"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

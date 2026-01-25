@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "agent_configs",
+  "info": {
+    "singularName": "agent-config",
+    "pluralName": "agent-configs",
+    "displayName": "Agent Config",
+    "description": "Configuration for AI agents"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "agentId": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "capabilities": {
+      "type": "json",
+      "required": true
+    },
+    "constraints": {
+      "type": "json",
+      "required": true
+    },
+    "maxOutputTokens": {
+      "type": "integer",
+      "default": 4096,
+      "min": 100,
+      "max": 128000
+    },
+    "defaultModel": {
+      "type": "string",
+      "default": "gpt-4o"
+    },
+    "frameworks": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::framework.framework"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

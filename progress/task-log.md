@@ -78,4 +78,76 @@ Segment: Week 1 – Foundation
   - Budget gate integration
   - Telemetry logging for every run
 
+### Task: Implement prompt-library package
+- **Status:** DONE
+- **Files created:**
+  - packages/prompt-library/package.json
+  - packages/prompt-library/tsconfig.json
+  - packages/prompt-library/src/types.ts
+  - packages/prompt-library/src/global-rules.ts
+  - packages/prompt-library/src/frameworks.ts
+  - packages/prompt-library/src/index.ts
+- **Features:**
+  - Global rules for all agents
+  - Category-specific rules (client-facing, code-generation, data-processing)
+  - Framework block placeholders (marketing, technical, ecommerce, communication)
+
+### Task: Implement API app
+- **Status:** DONE
+- **Files created:**
+  - apps/api/package.json
+  - apps/api/tsconfig.json
+  - apps/api/drizzle.config.ts
+  - apps/api/vitest.config.ts
+  - apps/api/.env.example
+  - apps/api/src/index.ts
+  - apps/api/src/db/schema.ts
+  - apps/api/src/db/index.ts
+  - apps/api/src/db/migrate.ts
+  - apps/api/src/routes/task.ts
+  - apps/api/src/routes/spend.ts
+- **Endpoints:**
+  - POST /api/run-task
+  - GET /api/projects/:projectId/spend
+- **Database schema:**
+  - clients
+  - projects (with dailyBudgetGbp, monthlyBudgetGbp)
+  - model_pricing
+  - task_runs (tokens, cost, model, agent, taskType, promptHash, status)
+
+### Task: Scaffold dashboard app
+- **Status:** DONE
+- **Files created:**
+  - apps/dashboard/package.json
+  - apps/dashboard/tsconfig.json
+  - apps/dashboard/next.config.js
+  - apps/dashboard/src/app/layout.tsx
+  - apps/dashboard/src/app/page.tsx
+  - apps/dashboard/src/app/projects/page.tsx
+  - apps/dashboard/src/app/projects/[id]/proposal/page.tsx
+  - apps/dashboard/src/app/projects/[id]/assumptions/page.tsx
+  - apps/dashboard/src/app/projects/[id]/requirements/page.tsx
+  - apps/dashboard/src/app/projects/[id]/tasks/page.tsx
+- **Routes:**
+  - /projects
+  - /projects/[id]/proposal
+  - /projects/[id]/assumptions
+  - /projects/[id]/requirements
+  - /projects/[id]/tasks
+
+### Task: Scaffold CMS app (Strapi)
+- **Status:** DONE
+- **Files created:**
+  - apps/cms/package.json
+  - apps/cms/Dockerfile
+  - apps/cms/docker-compose.yml
+  - apps/cms/.env.example
+  - apps/cms/src/api/framework/content-types/framework/schema.json
+  - apps/cms/src/api/agent-config/content-types/agent-config/schema.json
+  - apps/cms/src/api/prompt-template/content-types/prompt-template/schema.json
+- **Content types:**
+  - Framework
+  - AgentConfig
+  - PromptTemplate
+
 ---
