@@ -54,4 +54,28 @@ Segment: Week 1 – Foundation
   - getProjectSpend() - gets daily/monthly/total spend
   - budgetCheck() - validates task against budget limits
 
+### Task: Implement agent-core package
+- **Status:** DONE
+- **Files created:**
+  - packages/agent-core/package.json
+  - packages/agent-core/tsconfig.json
+  - packages/agent-core/vitest.config.ts
+  - packages/agent-core/src/types.ts
+  - packages/agent-core/src/questions.ts
+  - packages/agent-core/src/mock-llm.ts
+  - packages/agent-core/src/prompt-compiler.ts
+  - packages/agent-core/src/agent-runner.ts
+  - packages/agent-core/src/index.ts
+- **Tests added:**
+  - packages/agent-core/src/questions.test.ts
+  - packages/agent-core/src/prompt-compiler.test.ts
+  - packages/agent-core/src/agent-runner.test.ts
+- **Features implemented:**
+  - Question bank loading from ../agency-questions
+  - Prompt compilation (GLOBAL_RULES + AgentContract + FrameworkBlocks + TaskPrompt + KnownUnknowns)
+  - JSON output schema enforcement
+  - Mock LLM adapter with deterministic output
+  - Budget gate integration
+  - Telemetry logging for every run
+
 ---

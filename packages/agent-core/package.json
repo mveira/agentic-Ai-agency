@@ -1,0 +1,34 @@
+{
+  "name": "@agency/agent-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent orchestration core - prompt compilation, schema enforcement, budget gate",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agency/telemetry": "workspace:*",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
+  }
+}
