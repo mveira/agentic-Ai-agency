@@ -40,6 +40,22 @@ Impact:
 Date:
 [Today's date]
 
+### Decision: Parallel rollout via project-level execution guards (Week 4.1)
+- **Reason:** Agency and client CRMs need to run the same agents with different execution behavior for safe parallel rollout
+- **Implementation:**
+  - ProjectConfig with dryRun, enabledAgents, enabledActions flags
+  - Execution guard checks before agent execution and action execution
+  - Empty arrays = no filter (all allowed); populated arrays = allowlist
+  - Telemetry-ready log format with blockedReason field
+- **Alternatives considered:**
+  - Environment variables (not per-project, inflexible)
+  - Separate agent deployments per client (expensive, hard to maintain)
+  - Feature flags service (external dependency, overkill at this stage)
+- **Impact:**
+  - Client projects in dryRun log all intended actions but never write to GHL
+  - Agents can be enabled/disabled per project without code changes
+  - Zero client risk during parallel rollout
+
 ### Decision: Add TDD guardrails (Week 3.1)
 - **Reason:** Prevent TDD discipline from drifting over time by enforcing process through tooling
 - **Implementation:**

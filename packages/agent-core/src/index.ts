@@ -56,3 +56,8 @@ export type { RouterConfig, RouteResult } from './llm-router.js';
 
 // Agent Contracts (Week 3)
 export * from './contracts/index.js';
+
+// Execution Guard (Week 4.1)
+export { checkAgentExecution, checkActionExecution, formatGuardLog } from './execution-guard.js';
+export { ProjectConfigSchema } from './project-config.js';
+export type { ProjectConfig, BlockedReason, ExecutionGuardResult } from './project-config.js';

@@ -19,6 +19,30 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ---
 
+## Week 4.1 – Parallel Rollout Controls
+
+### Task: Add project configuration for rollout controls
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/project-config.ts (created)
+  - packages/agent-core/src/execution-guard.ts (created)
+  - packages/agent-core/src/index.ts (modified)
+- **Tests added/updated:**
+  - packages/agent-core/src/execution-guard.test.ts (15 tests)
+- **Commands run:**
+  - pnpm test (132 tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - ProjectConfig: dryRun, enabledAgents, enabledActions
+  - checkAgentExecution: blocks disabled agents, logs dryRun
+  - checkActionExecution: blocks disabled actions, no GHL writes in dryRun
+  - formatGuardLog: telemetry-ready log entries with blockedReason
+  - Same webhook behaves differently per project (agency vs client)
+  - Empty enabledAgents/enabledActions means no filter (all allowed)
+
+---
+
 ## Week 3.1 – TDD Guardrails
 
 ### Task: Add task-log checklist template
