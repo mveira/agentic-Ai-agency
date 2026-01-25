@@ -25,4 +25,20 @@ Segment: Week 1 – Foundation
   - Jest (slower, ESM issues)
   - Mocha (more configuration needed)
 
+## Decision: Week 2 Completion
+
+Decision:
+Week 2 (Governance & Assumptions) is complete and approved.
+
+Reason:
+All dependency requirements for controlled agent execution have been met.
+
+Impact:
+- Agents may execute subject to assumption gate
+- Week 3 (Agents & Intelligence) unblocked
+
+Date:
+[Today’s date]
+
+
 ---

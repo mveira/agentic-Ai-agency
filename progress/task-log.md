@@ -163,4 +163,32 @@ Segment: Week 1 – Foundation
   - Missing question bank fails fast
   - Output schema enforcement
 
+  ## Week 2 – Governance & Assumptions (COMPLETED)
+
+Status: DONE
+
+Completed:
+- Assumption gate implemented and enforced
+- Requirements generated from approved assumptions
+- Requirements versioning implemented
+- Tasks generated from requirements
+- Tasks blocked when assumptions pending
+- API endpoints for assumptions, requirements, tasks
+- Dashboard views for assumptions, requirements, tasks
+- All blocks and decisions logged
+
+Notes:
+- Week 2 dependency satisfied
+- Safe to proceed to Week 3 and beyond
+
+## Week 3 – Agents & Intelligence
+
+### Task: Add Hormozi/Psychology framework blocks to prompt-library
+- **Status:** DOING
+- **Files to create:**
+  - packages/prompt-library/src/frameworks/offer-economics.ts
+  - packages/prompt-library/src/frameworks/market-awareness.ts
+  - packages/prompt-library/src/frameworks/persuasion.ts
+  - packages/prompt-library/src/frameworks/funnel-design.ts
+
 ---
