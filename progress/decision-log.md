@@ -38,7 +38,19 @@ Impact:
 - Week 3 (Agents & Intelligence) unblocked
 
 Date:
-[Today’s date]
+[Today's date]
 
+### Decision: Add TDD guardrails (Week 3.1)
+- **Reason:** Prevent TDD discipline from drifting over time by enforcing process through tooling
+- **Implementation:**
+  - Task template in task-log.md requires 'Tests added/updated' and 'Commands run' before marking DONE
+  - CI workflow (.github/workflows/ci.yml) runs lint, typecheck, and test on every push/PR
+- **Benefits:**
+  - Automated enforcement catches regressions immediately
+  - Template ensures documentation of testing steps
+  - CI provides consistent verification across all contributors
+- **Alternatives considered:**
+  - Pre-commit hooks (can be bypassed locally)
+  - Manual code review only (error-prone, not scalable)
 
 ---

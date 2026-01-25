@@ -1,5 +1,54 @@
 # Task Log
 
+## Task Template
+
+Use this template for every task. A task cannot be marked DONE unless 'Tests added/updated' and 'Commands run' are filled.
+
+```
+### Task: [Description]
+- **Status:** TODO | DOING | DONE | BLOCKED
+- **Files touched:**
+  - [list files created/modified]
+- **Tests added/updated:**
+  - [list test files - REQUIRED for DONE status]
+- **Commands run:**
+  - [e.g., pnpm test, pnpm lint - REQUIRED for DONE status]
+- **Notes / blockers:**
+  - [any relevant context]
+```
+
+---
+
+## Week 3.1 – TDD Guardrails
+
+### Task: Add task-log checklist template
+- **Status:** DONE
+- **Files touched:**
+  - progress/task-log.md
+- **Tests added/updated:**
+  - N/A (documentation/process change)
+- **Commands run:**
+  - N/A (no code changes)
+- **Notes / blockers:**
+  - Template enforces TDD discipline by requiring tests and commands before DONE status
+
+### Task: Add CI workflow
+- **Status:** DONE
+- **Files touched:**
+  - .github/workflows/ci.yml
+- **Tests added/updated:**
+  - N/A (CI infrastructure)
+- **Commands run:**
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+  - pnpm test (117 tests passed)
+  - YAML validation (passed)
+- **Notes / blockers:**
+  - Workflow triggers on push and PR to main
+  - Uses Node 20, pnpm 9, with caching
+
+---
+
 Segment: Week 1 – Foundation
 
 ---

@@ -10,19 +10,17 @@
  */
 
 import type {
-  AgentContract,
   AgentRunResult,
   TaskDefinition,
   LLMAdapter,
   AgentOutput,
 } from './types.js';
-import { AgentRunner, type RunTaskParams } from './agent-runner.js';
+import { AgentRunner } from './agent-runner.js';
 import { LLMRouter, createMockRouter } from './llm-router.js';
 import {
   getAgentContract,
   AGENT_FRAMEWORK_REQUIREMENTS,
   AGENT_COST_CAPS,
-  QUALITY_CONTROL_AGENT_CONTRACT,
   QualityControlAgentInputSchema,
   shouldBlock,
 } from './contracts/index.js';
@@ -244,7 +242,7 @@ export class SpecializedAgentRunner {
     };
   }
 
-  private validateInput(agentId: string, input: unknown): string | null {
+  private validateInput(_agentId: string, input: unknown): string | null {
     // Input validation would be done against the agent's input schema
     // For now, just check that input is provided
     if (input === undefined || input === null) {

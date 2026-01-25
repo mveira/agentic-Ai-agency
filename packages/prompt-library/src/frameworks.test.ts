@@ -142,7 +142,7 @@ describe('Week 3 Frameworks', () => {
 
   describe('Framework conciseness', () => {
     it('all frameworks are under 5000 characters', () => {
-      for (const [id, framework] of Object.entries(ALL_FRAMEWORKS)) {
+      for (const [_id, framework] of Object.entries(ALL_FRAMEWORKS)) {
         expect(framework.content.length).toBeLessThan(5000);
       }
     });

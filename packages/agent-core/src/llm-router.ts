@@ -7,7 +7,7 @@
  * - Availability (fallback to alternatives)
  */
 
-import type { LLMAdapter, LLMCompletionParams, LLMCompletionResult } from './types.js';
+import type { LLMAdapter, LLMCompletionResult } from './types.js';
 import { estimateCost } from '@agency/telemetry';
 import { AGENT_MODEL_ROUTING, AGENT_COST_CAPS } from './contracts/index.js';
 import { MockLLMAdapter } from './mock-llm.js';

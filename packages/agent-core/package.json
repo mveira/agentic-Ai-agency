@@ -23,6 +23,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@agency/prompt-library": "workspace:*",
     "@agency/telemetry": "workspace:*",
     "zod": "^3.22.0"
   },
