@@ -19,6 +19,208 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ---
 
+## Week 5 – BuildOrchestrator Pipeline
+
+### Task: Create build pipeline schemas (Step 1)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/build-schemas.ts (created)
+- **Tests added/updated:**
+  - packages/agent-core/src/build-schemas.test.ts (21 tests)
+- **Commands run:**
+  - pnpm test (21 tests passed)
+- **Notes / blockers:**
+  - MarketingBlueprintSchema, UXUISpecSchema, CopyPackSchema, BuildPlanSchema, BuildTaskSchema, QCReportSchema
+  - Sub-schemas: FunnelStep, Screen, Component, LayoutBlock, AccessibilityRule, ScreenState, ScreenCopy
+  - Enforces min(1) on funnelSteps, screens, routes, successCriteria, acceptanceCriteria
+
+### Task: Create UX Design Agent contract (Step 2)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/ux-design-agent.ts (created)
+  - packages/agent-core/src/contracts/index.ts (modified)
+- **Tests added/updated:**
+  - packages/agent-core/src/contracts.test.ts (9 new tests, 40 total)
+- **Commands run:**
+  - pnpm test (40 tests passed)
+- **Notes / blockers:**
+  - agentId: ux-design-agent, model: claude-3-sonnet, cost cap: £0.75
+  - Consumes MarketingBlueprint, produces UXUISpec
+  - Constraints: no copy writing, no strategy modification, no skipping accessibility
+  - Added to ALL_AGENT_CONTRACTS, AGENT_MODEL_ROUTING, AGENT_COST_CAPS, AGENT_FRAMEWORK_REQUIREMENTS
+
+### Task: Create build mock factories (Step 3)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/build-mocks.ts (created)
+- **Tests added/updated:**
+  - packages/agent-core/src/build-mocks.test.ts (9 tests)
+- **Commands run:**
+  - pnpm test (9 tests passed)
+- **Notes / blockers:**
+  - createMockBlueprintOutput, createMockUXUISpecOutput, createMockCopyPackOutput
+  - createMockQCPassOutput, createMockQCBlockOutput
+  - registerBuildMocks(adapter) registers all on MockLLMAdapter via pattern matching
+
+### Task: Create BuildOrchestrator (Step 4)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/build-orchestrator.ts (created)
+- **Tests added/updated:**
+  - packages/agent-core/src/build-orchestrator.test.ts (20 tests)
+- **Commands run:**
+  - pnpm test (20 tests passed)
+- **Notes / blockers:**
+  - RequirementsProvider interface + InMemoryRequirementsProvider
+  - Governance gates: requirements existence + assumptions approval
+  - 4-step pipeline: strategy-funnel → ux-design → copy-messaging → quality-control
+  - Schema validation at every handoff
+  - Mode B enforcement: optional separated from core in assembleBuildPlan()
+  - QC blocking returns { status: 'blocked', blockReason }
+  - Telemetry recorded for each pipeline step
+
+### Task: Update index.ts exports (Step 5)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/index.ts (modified)
+- **Tests added/updated:**
+  - N/A (exports only)
+- **Commands run:**
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - All build schemas + types
+  - BuildOrchestrator, InMemoryRequirementsProvider, assembleBuildPlan
+  - All build mock factories
+  - All new types exported
+
+### Task: Create API build endpoints (Step 6)
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/build.ts (created)
+  - apps/api/src/index.ts (modified)
+- **Tests added/updated:**
+  - apps/api/src/routes/build.test.ts (8 tests)
+- **Commands run:**
+  - pnpm test (283 total tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - POST /api/projects/:id/build/plan → executes full pipeline, returns BuildPlan or error/blocked
+  - POST /api/projects/:id/build/approve-enhancement → approve/reject optional enhancements
+  - In-memory stores for development; swappable to DB later
+
+### Task: Create future upgrades roadmap document
+- **Status:** DONE
+- **Files touched:**
+  - docs/future-upgrades.md (created)
+- **Tests added/updated:**
+  - N/A (documentation only)
+- **Commands run:**
+  - pnpm test (283 tests passed)
+  - pnpm lint (passed)
+- **Notes / blockers:**
+  - Living roadmap with status key: IDEA / PLANNED / IN BUILD / DONE
+  - Sections: Infrastructure & Eventing, Auth, Portal UI/UX, Agents, Integrations, Observability, Governance
+  - DB-backed queue documented as first infrastructure upgrade before SQS/Redis
+  - Append-only notes section for ongoing context
+
+---
+
+## Week 4.0 – Auth + Multi-Tenant + Cloud Baseline
+
+### Task: Create @agency/auth package with RBAC
+- **Status:** DONE
+- **Files touched:**
+  - packages/auth/package.json (created)
+  - packages/auth/tsconfig.json (created)
+  - packages/auth/vitest.config.ts (created)
+  - packages/auth/src/types.ts (created)
+  - packages/auth/src/rbac.ts (created)
+  - packages/auth/src/index.ts (created)
+- **Tests added/updated:**
+  - packages/auth/src/rbac.test.ts (38 tests)
+- **Commands run:**
+  - pnpm test (38 auth tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - 5 roles: agency_admin, agency_operator, client_admin, client_member, viewer
+  - canAccessOrg, canAccessProject, canWriteOrg, canWriteProject
+  - isAgencyUser, isViewerOnly, getRoleForOrg
+  - getAccessibleOrgIds, filterAccessibleProjects, buildAuthContext
+  - Agency roles get cross-org access to all projects
+
+### Task: Extend DB schema for multi-tenant
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/db/schema.ts (modified)
+- **Tests added/updated:**
+  - N/A (schema definition, verified via typecheck)
+- **Commands run:**
+  - pnpm typecheck (passed)
+  - pnpm lint (passed)
+- **Notes / blockers:**
+  - Added orgTypeEnum (agency, client), membershipRoleEnum (5 roles)
+  - Added orgs, users, memberships tables
+  - Added orgId to projects table, made clientId nullable
+  - Added dryRun boolean to projects table
+
+### Task: Create API auth middleware with server-enforced tenancy
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/package.json (added @agency/auth dependency)
+  - apps/api/src/middleware/auth.ts (created)
+- **Tests added/updated:**
+  - apps/api/src/middleware/auth.test.ts (17 tests)
+- **Commands run:**
+  - pnpm test (18 API tests passed, 215 total)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - createAuthMiddleware: verifies bearer token, loads memberships, builds AuthContext
+  - createProjectAccessMiddleware: enforces read/write access per project via RBAC
+  - getAuthContext: extracts AuthContext from Hono context
+  - TokenVerifier, MembershipLoader, ProjectLoader interfaces for testability
+  - Mock implementations in tests; Supabase implementation plugged in later
+
+### Task: Add dashboard login page and auth middleware
+- **Status:** DONE
+- **Files touched:**
+  - apps/dashboard/package.json (added @supabase/ssr, @supabase/supabase-js)
+  - apps/dashboard/src/lib/supabase/client.ts (created)
+  - apps/dashboard/src/lib/supabase/server.ts (created)
+  - apps/dashboard/src/lib/supabase/middleware.ts (created)
+  - apps/dashboard/src/middleware.ts (created)
+  - apps/dashboard/src/app/login/page.tsx (created)
+  - apps/dashboard/src/app/auth/callback/route.ts (created)
+- **Tests added/updated:**
+  - N/A (UI scaffold, requires Supabase instance for integration testing)
+- **Commands run:**
+  - pnpm typecheck (passed)
+  - pnpm lint (passed)
+- **Notes / blockers:**
+  - Magic link auth via Supabase signInWithOtp
+  - Next.js middleware protects all routes except /login, /auth, /health
+  - Auth callback exchanges code for session
+  - Supabase client utilities for browser, server, and middleware contexts
+
+### Task: Update .env.example files with Supabase vars
+- **Status:** DONE
+- **Files touched:**
+  - .env.example (added Supabase vars)
+  - apps/api/.env.example (added Supabase vars)
+  - apps/dashboard/.env.example (created)
+- **Tests added/updated:**
+  - N/A (configuration)
+- **Commands run:**
+  - N/A (env file updates)
+- **Notes / blockers:**
+  - Root: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+  - API: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET
+  - Dashboard: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL
+
+---
+
 ## Week 4.2 – GHL Actions: Move Stage + Trigger Workflow
 
 ### Task: Generate sales & demo materials from system documentation
