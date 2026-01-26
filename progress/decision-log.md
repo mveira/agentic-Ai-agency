@@ -21,6 +21,39 @@ Use this format for all architectural and technical decisions:
 
 ---
 
+## Event Bus A – DB-backed Queue + Worker
+
+### Decision: Interface-based EventStore for testability
+- **Date:** 2026-01-26
+- **Context:** Event bus needs DB persistence but tests must run without a real database
+- **Decision:** Define EventStore interface with InMemoryEventStore for tests, same pattern as TelemetryStore and GHLAdapter
+- **Reason:** Consistent with existing adapter/interface patterns; enables full unit testing; swappable to Drizzle-backed implementation for production
+- **Alternatives considered:**
+  - Direct Drizzle queries in event functions (untestable without DB)
+  - SQLite in-memory for tests (extra dependency, slower)
+- **Impact:**
+  - 29 tests run without any database
+  - Production implementation plugs in via interface
+  - Worker, publisher, and handlers fully tested in isolation
+- **Status:** Approved
+
+### Decision: Custom event bus over pg-boss
+- **Date:** 2026-01-26
+- **Context:** Need reliable event processing with retries and dead-letter; pg-boss is a mature option but adds a dependency
+- **Decision:** Build custom event bus with EventStore interface, matching the exact schema and lifecycle needed
+- **Reason:** Full control over schema, no external dependency, matches existing codebase patterns, educational value for understanding queue internals
+- **Alternatives considered:**
+  - pg-boss (mature but opinionated, adds dependency, less control over schema)
+  - BullMQ + Redis (requires Redis infrastructure)
+- **Impact:**
+  - Zero new dependencies
+  - Full lifecycle: PENDING → PROCESSING → DONE/FAILED/DEAD_LETTERED
+  - Exponential backoff with configurable maxAttempts
+  - Idempotency via payloadHash unique constraint
+- **Status:** Approved
+
+---
+
 ## Week 5 – BuildOrchestrator Pipeline
 
 ### Decision: RequirementsProvider interface for governance gate

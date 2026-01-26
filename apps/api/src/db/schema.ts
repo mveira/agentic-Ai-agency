@@ -9,6 +9,7 @@ import {
   jsonb,
   pgEnum,
   boolean,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 /**
@@ -142,6 +143,48 @@ export const taskRuns = pgTable('task_runs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+/**
+ * Event status enum for the event bus.
+ */
+export const eventStatusEnum = pgEnum('event_status', [
+  'PENDING',
+  'PROCESSING',
+  'DONE',
+  'FAILED',
+  'DEAD_LETTERED',
+]);
+
+/**
+ * Events table - DB-backed event bus for reliable async processing.
+ */
+export const events = pgTable(
+  'events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .references(() => projects.id)
+      .notNull(),
+    type: varchar('type', { length: 100 }).notNull(),
+    status: eventStatusEnum('status').notNull().default('PENDING'),
+    payloadJson: jsonb('payload_json').notNull(),
+    payloadHash: varchar('payload_hash', { length: 64 }).notNull(),
+    attempts: integer('attempts').default(0).notNull(),
+    nextRunAt: timestamp('next_run_at').defaultNow().notNull(),
+    lockedAt: timestamp('locked_at'),
+    lockedBy: varchar('locked_by', { length: 100 }),
+    lastError: text('last_error'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueProjectTypeHash: uniqueIndex('events_project_type_hash_idx').on(
+      table.projectId,
+      table.type,
+      table.payloadHash
+    ),
+  })
+);
+
 // Type exports for use in application code
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
@@ -151,3 +194,5 @@ export type ModelPricing = typeof modelPricing.$inferSelect;
 export type NewModelPricing = typeof modelPricing.$inferInsert;
 export type TaskRun = typeof taskRuns.$inferSelect;
 export type NewTaskRun = typeof taskRuns.$inferInsert;
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;

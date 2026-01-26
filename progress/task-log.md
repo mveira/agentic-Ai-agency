@@ -109,6 +109,73 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - POST /api/projects/:id/build/approve-enhancement → approve/reject optional enhancements
   - In-memory stores for development; swappable to DB later
 
+---
+
+## Event Bus A – DB-backed Queue + Worker
+
+### Task: Create event bus domain layer (types, EventStore, event API)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/event-bus.ts (created)
+- **Tests added/updated:**
+  - packages/agent-core/src/event-bus.test.ts (17 tests)
+- **Commands run:**
+  - pnpm test (17 tests passed)
+- **Notes / blockers:**
+  - SystemEvent type with full lifecycle: PENDING → PROCESSING → DONE/FAILED/DEAD_LETTERED
+  - EventStore interface with InMemoryEventStore for tests
+  - publishEvent with idempotency via computeEventHash (SHA-256, key-order-independent)
+  - markProcessing, markDone, markFailed (with backoff), markDeadLetter
+  - Unique constraint on (projectId, type, payloadHash)
+  - fetchBatch simulates SELECT ... FOR UPDATE SKIP LOCKED
+
+### Task: Create EventWorker with handler registry and retry logic
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/event-worker.ts (created)
+- **Tests added/updated:**
+  - packages/agent-core/src/event-worker.test.ts (12 tests)
+- **Commands run:**
+  - pnpm test (12 tests passed)
+- **Notes / blockers:**
+  - EventWorker.tick() fetches batch, dispatches handlers, marks DONE/FAILED/DEAD_LETTERED
+  - Exponential backoff: baseBackoffMs * 2^(attempts-1)
+  - Configurable maxAttempts (dead-letters after exceeding)
+  - Handler dispatch by event.type; graceful failure for unknown types
+  - Two workers don't process same event (locking verified)
+  - createDefaultHandlers() with DISCOVERY_SUBMITTED stub (logs only)
+  - ProcessResult telemetry: eventId, eventType, status, error, durationMs
+
+### Task: Add events table to DB schema
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/db/schema.ts (modified)
+- **Tests added/updated:**
+  - N/A (schema definition, verified via typecheck)
+- **Commands run:**
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - eventStatusEnum: PENDING, PROCESSING, DONE, FAILED, DEAD_LETTERED
+  - events table with all fields matching SystemEvent interface
+  - uniqueIndex on (projectId, type, payloadHash)
+  - Event/NewEvent type exports
+
+### Task: Update exports and run full verification
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/index.ts (modified)
+- **Tests added/updated:**
+  - N/A (exports only)
+- **Commands run:**
+  - pnpm test (312 total tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Exported: InMemoryEventStore, publishEvent, markProcessing, markDone, markFailed, markDeadLetter, computeEventHash
+  - Exported: EventWorker, createDefaultHandlers
+  - All types exported: SystemEvent, EventStatus, EventStore, EventHandler, ProcessResult, etc.
+  - Renamed computePayloadHash → computeEventHash to avoid conflict with ghl-actions export
+
 ### Task: Create future upgrades roadmap document
 - **Status:** DONE
 - **Files touched:**

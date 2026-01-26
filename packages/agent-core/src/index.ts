@@ -137,3 +137,29 @@ export {
   createMockQCBlockOutput,
   registerBuildMocks,
 } from './build-mocks.js';
+
+// Event Bus (Event Bus A)
+export {
+  InMemoryEventStore,
+  publishEvent,
+  markProcessing,
+  markDone,
+  markFailed,
+  markDeadLetter,
+  computeEventHash,
+} from './event-bus.js';
+export type {
+  SystemEvent,
+  EventStatus,
+  EventStore,
+  PublishEventParams,
+  PublishEventResult,
+} from './event-bus.js';
+
+// Event Worker (Event Bus A)
+export { EventWorker, createDefaultHandlers } from './event-worker.js';
+export type {
+  EventHandler,
+  EventWorkerConfig,
+  ProcessResult,
+} from './event-worker.js';

@@ -17,7 +17,7 @@
 
 | Upgrade | Status | Notes |
 |---------|--------|-------|
-| DB-backed job queue (pg-boss / custom) | PLANNED | Current in-memory execution is fine for single-instance. First upgrade path before cloud scaling. |
+| DB-backed job queue (custom EventStore) | DONE | Custom event bus with InMemoryEventStore + Drizzle schema. Full lifecycle with retries, DLQ, idempotency. |
 | SQS / Redis Streams migration | IDEA | Replace DB queue when throughput requires dedicated message broker. Only after DB queue proves bottleneck. |
 | Edge caching for prompt templates | IDEA | Cache compiled prompts at CDN edge to reduce cold-start latency. |
 | Horizontal scaling (multiple API instances) | IDEA | Requires queue-based execution (DB or SQS) to be in place first. |
