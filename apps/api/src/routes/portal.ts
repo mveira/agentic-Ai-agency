@@ -426,4 +426,198 @@ reviewsRouter.get('/:versionId', (c) => {
   });
 });
 
+// ─── Plan-Next Types ──────────────────────────────────────────────────────────
+
+export interface PlannedQuestion {
+  key: string;
+  text: string;
+  inputType: QuestionInputType;
+  options?: string[];
+  required: boolean;
+  helpText?: string;
+}
+
+export interface PlanNextResult {
+  sessionId: string;
+  round: number;
+  readiness: number;
+  summary: string[];
+  questions: PlannedQuestion[];
+  blockReason: string | null;
+}
+
+export interface ApproveQuestionsResult {
+  sessionId: string;
+  round: number;
+  approved: boolean;
+  questionsPublished: number;
+}
+
+// ─── Plan-Next Stub Data ──────────────────────────────────────────────────────
+
+function createStubPlanNext(sessionId: string, round: number): PlanNextResult {
+  if (round === 1) {
+    return {
+      sessionId,
+      round,
+      readiness: 0.3,
+      summary: [
+        'Basic business info captured from intake form',
+        'Missing: target audience detail, competitive landscape, success metrics',
+      ],
+      questions: [
+        {
+          key: 'target_audience',
+          text: 'Who is your primary target audience?',
+          inputType: 'short_text',
+          required: true,
+          helpText: 'Describe the ideal customer for this project.',
+        },
+        {
+          key: 'competitors',
+          text: 'Who are your main competitors?',
+          inputType: 'long_text',
+          required: false,
+          helpText: 'List 2–3 competitors and what they do well.',
+        },
+        {
+          key: 'project_goal',
+          text: 'What is the primary goal for this project?',
+          inputType: 'single_select',
+          options: ['Lead Generation', 'Brand Awareness', 'Direct Sales', 'Customer Retention'],
+          required: true,
+        },
+        {
+          key: 'services',
+          text: 'Which services do you currently offer?',
+          inputType: 'multi_select',
+          options: ['Web Design', 'SEO', 'PPC', 'Social Media', 'Email Marketing', 'Content Strategy'],
+          required: true,
+        },
+        {
+          key: 'budget',
+          text: 'What is your monthly marketing budget?',
+          inputType: 'number',
+          required: true,
+          helpText: 'In GBP.',
+        },
+      ],
+      blockReason: null,
+    };
+  }
+
+  // Round 2+ = higher readiness, fewer questions
+  return {
+    sessionId,
+    round,
+    readiness: 0.85,
+    summary: [
+      'Target audience: SaaS founders',
+      'Primary goal: Lead generation',
+      'Budget: £3,000/month',
+      'Services: SEO, PPC',
+      'Missing: timeline and design preferences',
+    ],
+    questions: [
+      {
+        key: 'timeline',
+        text: 'When do you want to launch?',
+        inputType: 'date',
+        required: true,
+      },
+      {
+        key: 'design_style',
+        text: 'What design style do you prefer?',
+        inputType: 'single_select',
+        options: ['Modern & Minimal', 'Bold & Vibrant', 'Corporate & Professional', 'Playful & Creative'],
+        required: true,
+        helpText: 'This guides the visual direction of your project.',
+      },
+    ],
+    blockReason: null,
+  };
+}
+
+/**
+ * POST /api/clarification/sessions/:sessionId/plan-next
+ *
+ * Invokes BusinessArchitectAgent to plan the next round of questions.
+ * Returns readiness score, understanding summary, and planned questions.
+ */
+const PlanNextSchema = z.object({
+  round: z.number().int().min(1),
+  intakeData: z.record(z.unknown()).optional(),
+  priorAnswers: z
+    .array(
+      z.object({
+        key: z.string(),
+        value: z.union([z.string(), z.array(z.string()), z.number()]),
+      })
+    )
+    .optional(),
+});
+
+clarificationRouter.post(
+  '/sessions/:sessionId/plan-next',
+  zValidator('json', PlanNextSchema),
+  (c) => {
+    const sessionId = c.req.param('sessionId');
+    const body = c.req.valid('json');
+
+    const result = createStubPlanNext(sessionId, body.round);
+    return c.json(result);
+  }
+);
+
+/**
+ * POST /api/clarification/sessions/:sessionId/approve-questions
+ *
+ * Agency approval gate: reviews planned questions before they're shown to client.
+ */
+const ApproveQuestionsSchema = z.object({
+  round: z.number().int().min(1),
+  approved: z.boolean(),
+  removedKeys: z.array(z.string()).optional().describe('Question keys removed by agency'),
+  editedQuestions: z
+    .array(
+      z.object({
+        key: z.string(),
+        text: z.string().optional(),
+        helpText: z.string().optional(),
+      })
+    )
+    .optional()
+    .describe('Questions edited by agency'),
+});
+
+clarificationRouter.post(
+  '/sessions/:sessionId/approve-questions',
+  zValidator('json', ApproveQuestionsSchema),
+  (c) => {
+    const sessionId = c.req.param('sessionId');
+    const body = c.req.valid('json');
+
+    if (!body.approved) {
+      return c.json({
+        sessionId,
+        round: body.round,
+        approved: false,
+        questionsPublished: 0,
+      } satisfies ApproveQuestionsResult);
+    }
+
+    // Simulate publishing: count questions minus removed
+    const removedCount = body.removedKeys?.length ?? 0;
+    const stubPlan = createStubPlanNext(sessionId, body.round);
+    const publishedCount = stubPlan.questions.length - removedCount;
+
+    return c.json({
+      sessionId,
+      round: body.round,
+      approved: true,
+      questionsPublished: Math.max(0, publishedCount),
+    } satisfies ApproveQuestionsResult);
+  }
+);
+
 export { portalRouter, clarificationRouter, requirementsRouter, reviewsRouter };

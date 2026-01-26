@@ -783,3 +783,63 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - Output schema enforcement working
 
 ---
+
+## BusinessArchitectAgent — Clarification Rounds
+
+### Task: Create BusinessArchitectAgent contract + schemas
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/business-architect-agent.ts (NEW)
+  - packages/agent-core/src/business-architect.test.ts (NEW)
+- **Tests added/updated:**
+  - business-architect.test.ts — 28 tests (schemas, StrapiProvider, contract constraints)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (28 pass)
+- **Notes / blockers:**
+  - ClarificationQuestionSchema: key, text, inputType, options, required, validation, helpText
+  - ClarificationResultSchema: readiness (0–1), summary[], questions[], blockReason
+  - StrapiProvider interface + InMemoryStrapiProvider for tests
+  - Agent contract enforces: read-only Strapi, no requirements generation, guided choices
+
+### Task: Register agent in contracts registry + update tests
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/index.ts (MODIFIED)
+  - packages/agent-core/src/contracts.test.ts (MODIFIED)
+- **Tests added/updated:**
+  - contracts.test.ts — 49 tests (up from 40; +9 for business-architect-agent)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (49 pass)
+- **Notes / blockers:**
+  - Agent count: 6 → 7
+  - Registered in ALL_AGENT_CONTRACTS, AGENT_MODEL_ROUTING (claude-3-sonnet), AGENT_COST_CAPS (0.50), AGENT_FRAMEWORK_REQUIREMENTS (market-awareness, offer-economics)
+
+### Task: Add plan-next and approve-questions API endpoints
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/portal.ts (MODIFIED)
+  - apps/api/src/routes/portal.test.ts (MODIFIED)
+- **Tests added/updated:**
+  - portal.test.ts — 22 tests (up from 14; +8 for plan-next and approve-questions)
+- **Commands run:**
+  - pnpm --filter @agency/api test (22 pass)
+- **Notes / blockers:**
+  - POST /api/clarification/sessions/:sessionId/plan-next — returns readiness, summary, questions, blockReason
+  - POST /api/clarification/sessions/:sessionId/approve-questions — agency approval gate with removedKeys + editedQuestions
+  - Round 1 returns lower readiness + more questions; round 2+ returns higher readiness + fewer questions
+  - Stub data; will wire to real agent execution later
+
+### Task: Full verification + commit
+- **Status:** DONE
+- **Files touched:**
+  - progress/task-log.md, progress/decision-log.md
+- **Tests added/updated:**
+  - N/A (verification)
+- **Commands run:**
+  - pnpm test — 386 tests pass (238 agent-core + 48 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Committed as 'Add BusinessArchitectAgent and clarification planning'
+
+---

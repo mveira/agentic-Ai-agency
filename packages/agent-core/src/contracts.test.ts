@@ -11,20 +11,23 @@ import {
   AUTOMATION_CRM_AGENT_CONTRACT,
   UX_DESIGN_AGENT_CONTRACT,
   QUALITY_CONTROL_AGENT_CONTRACT,
+  BUSINESS_ARCHITECT_AGENT_CONTRACT,
   ResearchAgentInputSchema,
   UXDesignAgentInputSchema,
+  BusinessArchitectAgentInputSchema,
   shouldBlock,
 } from './contracts/index.js';
 
 describe('Agent Contracts', () => {
-  it('has all 6 required agents defined', () => {
-    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(6);
+  it('has all 7 required agents defined', () => {
+    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(7);
     expect(ALL_AGENT_CONTRACTS['research-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['strategy-funnel-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['copy-messaging-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['automation-crm-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['ux-design-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['quality-control-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['business-architect-agent']).toBeDefined();
   });
 
   it('getAgentContract returns correct contract', () => {
@@ -46,6 +49,7 @@ describe('Agent Contracts', () => {
       AUTOMATION_CRM_AGENT_CONTRACT,
       UX_DESIGN_AGENT_CONTRACT,
       QUALITY_CONTROL_AGENT_CONTRACT,
+      BUSINESS_ARCHITECT_AGENT_CONTRACT,
     ];
 
     it.each(contracts)('$agentId has required fields', (contract) => {
@@ -264,6 +268,58 @@ describe('UX Design Agent', () => {
     const contract = getAgentContract('ux-design-agent');
     expect(contract).toBe(UX_DESIGN_AGENT_CONTRACT);
     expect(contract?.agentId).toBe('ux-design-agent');
+  });
+});
+
+describe('Business Architect Agent', () => {
+  it('does NOT generate requirements (constraint)', () => {
+    const constraints = BUSINESS_ARCHITECT_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('not');
+    expect(constraints).toContain('requirements');
+  });
+
+  it('read-only Strapi access', () => {
+    const constraints = BUSINESS_ARCHITECT_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('read-only');
+  });
+
+  it('has market-awareness and offer-economics frameworks', () => {
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['business-architect-agent']).toContain('market-awareness');
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['business-architect-agent']).toContain('offer-economics');
+  });
+
+  it('has cost cap of 0.50', () => {
+    expect(AGENT_COST_CAPS['business-architect-agent']).toBe(0.50);
+  });
+
+  it('routes to claude-3-sonnet', () => {
+    expect(AGENT_MODEL_ROUTING['business-architect-agent']).toBe('claude-3-sonnet');
+  });
+
+  it('BusinessArchitectAgentInputSchema validates correct input', () => {
+    const validInput = {
+      projectId: '550e8400-e29b-41d4-a716-446655440000',
+      sessionId: 'session-001',
+      round: 1,
+      intakeData: { businessName: 'Acme Corp' },
+    };
+    expect(BusinessArchitectAgentInputSchema.safeParse(validInput).success).toBe(true);
+  });
+
+  it('BusinessArchitectAgentInputSchema rejects invalid projectId', () => {
+    const invalid = {
+      projectId: 'not-a-uuid',
+      sessionId: 'session-001',
+      round: 1,
+      intakeData: {},
+    };
+    expect(BusinessArchitectAgentInputSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it('getAgentContract returns Business Architect contract', () => {
+    const contract = getAgentContract('business-architect-agent');
+    expect(contract).toBe(BUSINESS_ARCHITECT_AGENT_CONTRACT);
+    expect(contract?.agentId).toBe('business-architect-agent');
   });
 });
 

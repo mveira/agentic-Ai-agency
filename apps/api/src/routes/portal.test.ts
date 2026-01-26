@@ -12,6 +12,8 @@ import type {
   RequirementsVersion,
   ReviewStatus,
   UnderstandingSummary,
+  PlanNextResult,
+  ApproveQuestionsResult,
 } from './portal.js';
 
 const TEST_PROJECT_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -299,5 +301,187 @@ describe('GET /api/reviews/:versionId', () => {
       expect(event.event).toBeDefined();
       expect(['done', 'in_progress', 'pending']).toContain(event.status);
     }
+  });
+});
+
+describe('POST /api/clarification/sessions/:sessionId/plan-next', () => {
+  let app: Hono;
+
+  beforeEach(() => {
+    app = createTestApp();
+  });
+
+  it('returns plan with readiness, summary, and questions for round 1', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    expect(res.status).toBe(200);
+    const body: PlanNextResult = await res.json();
+    expect(body.sessionId).toBe('session-001');
+    expect(body.round).toBe(1);
+    expect(body.readiness).toBeGreaterThanOrEqual(0);
+    expect(body.readiness).toBeLessThanOrEqual(1);
+    expect(body.summary.length).toBeGreaterThan(0);
+    expect(body.questions.length).toBeGreaterThan(0);
+    expect(body.blockReason).toBeNull();
+  });
+
+  it('round 1 questions have expected fields', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    const body: PlanNextResult = await res.json();
+    for (const q of body.questions) {
+      expect(q.key).toBeDefined();
+      expect(q.text).toBeDefined();
+      expect(q.inputType).toBeDefined();
+      expect(typeof q.required).toBe('boolean');
+    }
+  });
+
+  it('round 1 includes guided choices (single_select/multi_select)', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    const body: PlanNextResult = await res.json();
+    const inputTypes = body.questions.map((q) => q.inputType);
+    expect(inputTypes).toContain('single_select');
+    expect(inputTypes).toContain('multi_select');
+  });
+
+  it('round 2 has higher readiness and fewer questions', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          round: 2,
+          priorAnswers: [
+            { key: 'target_audience', value: 'SaaS founders' },
+            { key: 'budget', value: 3000 },
+          ],
+        }),
+      }
+    );
+
+    expect(res.status).toBe(200);
+    const body: PlanNextResult = await res.json();
+    expect(body.round).toBe(2);
+    expect(body.readiness).toBeGreaterThan(0.5);
+
+    // Round 2 should have fewer questions than round 1
+    const r1Res = await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+    const r1Body: PlanNextResult = await r1Res.json();
+    expect(body.questions.length).toBeLessThan(r1Body.questions.length);
+  });
+
+  it('select-type questions include helpText where provided', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 2 }),
+      }
+    );
+
+    const body: PlanNextResult = await res.json();
+    const withHelp = body.questions.filter((q) => q.helpText);
+    expect(withHelp.length).toBeGreaterThan(0);
+  });
+});
+
+describe('POST /api/clarification/sessions/:sessionId/approve-questions', () => {
+  let app: Hono;
+
+  beforeEach(() => {
+    app = createTestApp();
+  });
+
+  it('approves questions and returns published count', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/approve-questions',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          round: 1,
+          approved: true,
+        }),
+      }
+    );
+
+    expect(res.status).toBe(200);
+    const body: ApproveQuestionsResult = await res.json();
+    expect(body.sessionId).toBe('session-001');
+    expect(body.round).toBe(1);
+    expect(body.approved).toBe(true);
+    expect(body.questionsPublished).toBeGreaterThan(0);
+  });
+
+  it('rejects questions when not approved', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/approve-questions',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          round: 1,
+          approved: false,
+        }),
+      }
+    );
+
+    expect(res.status).toBe(200);
+    const body: ApproveQuestionsResult = await res.json();
+    expect(body.approved).toBe(false);
+    expect(body.questionsPublished).toBe(0);
+  });
+
+  it('removes questions by key', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-001/approve-questions',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          round: 1,
+          approved: true,
+          removedKeys: ['budget', 'competitors'],
+        }),
+      }
+    );
+
+    expect(res.status).toBe(200);
+    const body: ApproveQuestionsResult = await res.json();
+    expect(body.approved).toBe(true);
+    // Original round 1 has 5 questions, removing 2 → 3
+    expect(body.questionsPublished).toBe(3);
   });
 });

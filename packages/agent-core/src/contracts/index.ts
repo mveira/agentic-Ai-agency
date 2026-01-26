@@ -97,6 +97,28 @@ export type {
   ViolationSeverityType,
 } from './quality-control-agent.js';
 
+// Business Architect Agent
+export {
+  BUSINESS_ARCHITECT_AGENT_CONTRACT,
+  BusinessArchitectAgentInputSchema,
+  BusinessArchitectAgentOutputSchema,
+  ClarificationQuestionSchema,
+  ClarificationResultSchema,
+  ClarificationInputType,
+  BUSINESS_ARCHITECT_AGENT_FRAMEWORKS,
+  BUSINESS_ARCHITECT_AGENT_MODEL,
+  BUSINESS_ARCHITECT_AGENT_COST_CAP,
+  InMemoryStrapiProvider,
+} from './business-architect-agent.js';
+export type {
+  BusinessArchitectAgentInput,
+  BusinessArchitectAgentOutput,
+  ClarificationQuestion,
+  ClarificationResult,
+  StrapiProvider,
+  StrapiContentItem,
+} from './business-architect-agent.js';
+
 import type { AgentContract } from '../types.js';
 import { RESEARCH_AGENT_CONTRACT } from './research-agent.js';
 import { STRATEGY_FUNNEL_AGENT_CONTRACT } from './strategy-funnel-agent.js';
@@ -104,6 +126,7 @@ import { COPY_MESSAGING_AGENT_CONTRACT } from './copy-messaging-agent.js';
 import { AUTOMATION_CRM_AGENT_CONTRACT } from './automation-crm-agent.js';
 import { UX_DESIGN_AGENT_CONTRACT } from './ux-design-agent.js';
 import { QUALITY_CONTROL_AGENT_CONTRACT } from './quality-control-agent.js';
+import { BUSINESS_ARCHITECT_AGENT_CONTRACT } from './business-architect-agent.js';
 
 /**
  * All agent contracts by ID
@@ -115,6 +138,7 @@ export const ALL_AGENT_CONTRACTS: Record<string, AgentContract> = {
   'automation-crm-agent': AUTOMATION_CRM_AGENT_CONTRACT,
   'ux-design-agent': UX_DESIGN_AGENT_CONTRACT,
   'quality-control-agent': QUALITY_CONTROL_AGENT_CONTRACT,
+  'business-architect-agent': BUSINESS_ARCHITECT_AGENT_CONTRACT,
 };
 
 /**
@@ -134,6 +158,7 @@ export const AGENT_MODEL_ROUTING: Record<string, string> = {
   'automation-crm-agent': 'gpt-4o-mini',
   'ux-design-agent': 'claude-3-sonnet',
   'quality-control-agent': 'claude-3-sonnet',
+  'business-architect-agent': 'claude-3-sonnet',
 };
 
 /**
@@ -146,6 +171,7 @@ export const AGENT_COST_CAPS: Record<string, number> = {
   'automation-crm-agent': 0.25,
   'ux-design-agent': 0.75,
   'quality-control-agent': 0.50,
+  'business-architect-agent': 0.50,
 };
 
 /**
@@ -158,4 +184,5 @@ export const AGENT_FRAMEWORK_REQUIREMENTS: Record<string, string[]> = {
   'automation-crm-agent': ['funnel-design'],
   'ux-design-agent': ['funnel-design'],
   'quality-control-agent': ['offer-economics', 'market-awareness', 'persuasion', 'funnel-design'],
+  'business-architect-agent': ['market-awareness', 'offer-economics'],
 };

@@ -21,6 +21,38 @@ Use this format for all architectural and technical decisions:
 
 ---
 
+## BusinessArchitectAgent — Clarification Rounds
+
+### Decision: StrapiProvider interface with InMemory test implementation
+- **Date:** 2026-01-26
+- **Context:** BusinessArchitectAgent needs to read templates from Strapi CMS but must not be tightly coupled to it
+- **Decision:** Define StrapiProvider interface (available(), fetchTemplates()) with InMemoryStrapiProvider for tests; agent blocks with logged reason if Strapi is required but unavailable
+- **Reason:** Consistent with existing adapter/interface patterns (GHLAdapter, TokenVerifier, EventStore); enables full testing without Strapi running
+- **Alternatives considered:**
+  - Direct Strapi API calls (untestable, tightly coupled)
+  - Skip Strapi integration (loses template reuse capability)
+- **Impact:**
+  - Agent tests run without any CMS dependency
+  - Production implementation plugs in via interface
+  - Blocking behavior is explicit and logged
+- **Status:** Approved
+
+### Decision: Agency approval gate for planned questions
+- **Date:** 2026-01-26
+- **Context:** Agent-generated questions need human review before being shown to clients
+- **Decision:** Add POST approve-questions endpoint as agency review gate; agency can remove, edit, or reject entire question batches
+- **Reason:** Prevents low-quality or off-brand questions from reaching clients; maintains agency control over client experience
+- **Alternatives considered:**
+  - Auto-publish questions (risky, no human review)
+  - QC agent review only (insufficient for brand/tone control)
+- **Impact:**
+  - Questions only reach clients after agency approval
+  - Agency can remove specific questions or edit text/helpText
+  - Rejected batches trigger re-planning
+- **Status:** Approved
+
+---
+
 ## Portal UX — Hybrid Clarification Flow
 
 ### Decision: JSON contract-driven UI with no embedded business logic
