@@ -5,6 +5,7 @@ import { taskRouter } from './routes/task.js';
 import { spendRouter } from './routes/spend.js';
 import { projectConfigRouter } from './routes/project-config.js';
 import { buildRouter } from './routes/build.js';
+import { portalRouter, clarificationRouter, requirementsRouter, reviewsRouter } from './routes/portal.js';
 
 const app = new Hono();
 
@@ -26,6 +27,10 @@ app.route('/api/run-task', taskRouter);
 app.route('/api/projects', spendRouter);
 app.route('/api/projects', projectConfigRouter);
 app.route('/api/projects', buildRouter);
+app.route('/api/projects', portalRouter);
+app.route('/api/clarification', clarificationRouter);
+app.route('/api/requirements', requirementsRouter);
+app.route('/api/reviews', reviewsRouter);
 
 // 404 handler
 app.notFound((c) => {

@@ -111,6 +111,65 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ---
 
+## Portal UX — Hybrid Clarification Flow
+
+### Task: Create API portal stubs
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/portal.ts (created)
+  - apps/api/src/index.ts (modified — mounted 4 new routers)
+- **Tests added/updated:**
+  - apps/api/src/routes/portal.test.ts (14 tests)
+- **Commands run:**
+  - pnpm test (14 portal tests passed)
+- **Notes / blockers:**
+  - GET /api/projects/:id/intakes/:leadIntakeId — lead intake data
+  - GET /api/clarification/sessions/:sessionId — questions with all 6 inputTypes
+  - POST /api/clarification/sessions/:sessionId/answers — validates required, returns understanding summary
+  - GET /api/requirements/:versionId — requirements + assumptions
+  - POST /api/requirements/:versionId/confirm — returns confirmed/regenerating based on decisions
+  - GET /api/reviews/:versionId — review status with timeline
+  - All endpoints return stubbed JSON matching typed contracts
+
+### Task: Create QuestionField component with tests
+- **Status:** DONE
+- **Files touched:**
+  - apps/dashboard/src/components/QuestionField.tsx (created)
+  - apps/dashboard/src/types/portal.ts (created)
+  - apps/dashboard/vitest.config.mts (created)
+  - apps/dashboard/src/test-setup.ts (created)
+  - apps/dashboard/package.json (added test deps + test script)
+- **Tests added/updated:**
+  - apps/dashboard/src/components/QuestionField.test.tsx (15 tests)
+- **Commands run:**
+  - pnpm test (15 dashboard tests passed)
+- **Notes / blockers:**
+  - Renders correct control per inputType: short_text, long_text, number, date, single_select, multi_select
+  - Required indicator (asterisk) displayed for required questions
+  - Error messages displayed when provided
+  - onChange fires with correct value types (string, string[], number)
+  - Added vitest + @testing-library/react + jsdom + @vitejs/plugin-react to dashboard
+
+### Task: Create portal flow pages
+- **Status:** DONE
+- **Files touched:**
+  - apps/dashboard/src/app/projects/[id]/intake/[leadIntakeId]/page.tsx (created)
+  - apps/dashboard/src/app/projects/[id]/clarification/[sessionId]/page.tsx (created)
+  - apps/dashboard/src/app/projects/[id]/requirements/[versionId]/confirm/page.tsx (created)
+  - apps/dashboard/src/app/projects/[id]/review/[versionId]/page.tsx (created)
+- **Tests added/updated:**
+  - N/A (pages compose tested components; API stubs tested separately)
+- **Commands run:**
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Intake page: displays discovery form fields in table, links to clarification
+  - Clarification page: chat-like timeline, QuestionField per question, understanding summary panel, client-side validation
+  - Requirements confirm page: requirement checklist (Correct/Needs Change), assumptions list (Approve/Reject with comments), regenerating placeholder
+  - Review page: progress bars, blockers list, timeline with status indicators
+  - All pages driven by JSON contracts from API — no embedded business logic
+
+---
+
 ## Event Bus A – DB-backed Queue + Worker
 
 ### Task: Create event bus domain layer (types, EventStore, event API)

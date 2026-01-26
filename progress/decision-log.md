@@ -21,6 +21,24 @@ Use this format for all architectural and technical decisions:
 
 ---
 
+## Portal UX — Hybrid Clarification Flow
+
+### Decision: JSON contract-driven UI with no embedded business logic
+- **Date:** 2026-01-26
+- **Context:** Portal pages need to render questions, requirements, and review status driven by API data
+- **Decision:** All UI components render strictly from typed JSON contracts; form controls selected by inputType discriminator; no business logic in components
+- **Reason:** Clean separation enables independent testing of API contracts and UI rendering; components are reusable; logic changes only affect API
+- **Alternatives considered:**
+  - Embedded logic in components (harder to test, tightly coupled)
+  - Server-side form rendering (less interactive, worse UX for interview flow)
+- **Impact:**
+  - QuestionField renders 6 input types from single schema
+  - Pages fetch from API stubs and render from JSON
+  - Swapping stubs for real API requires zero UI changes
+- **Status:** Approved
+
+---
+
 ## Event Bus A – DB-backed Queue + Worker
 
 ### Decision: Interface-based EventStore for testability
