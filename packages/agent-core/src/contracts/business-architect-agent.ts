@@ -46,14 +46,33 @@ export const ClarificationQuestionSchema = z.object({
 
 export type ClarificationQuestion = z.infer<typeof ClarificationQuestionSchema>;
 
+// ─── Readiness Enum ───────────────────────────────────────────────────────────
+
+export const Readiness = z.enum([
+  'NEEDS_MORE_INFO',
+  'READY_FOR_REQUIREMENTS',
+  'BLOCKED',
+]);
+
+export type Readiness = z.infer<typeof Readiness>;
+
+// ─── Missing Slots ────────────────────────────────────────────────────────────
+
+export const MissingSlotsSchema = z.object({
+  budget: z.boolean().default(false),
+  timeline: z.boolean().default(false),
+  offer: z.boolean().default(false),
+  channel: z.boolean().default(false),
+  goals: z.boolean().default(false),
+  conflicts: z.boolean().default(false),
+});
+
+export type MissingSlots = z.infer<typeof MissingSlotsSchema>;
+
 // ─── Agent Result Schema ──────────────────────────────────────────────────────
 
 export const ClarificationResultSchema = z.object({
-  readiness: z
-    .number()
-    .min(0)
-    .max(1)
-    .describe('0–1 score: 1 = ready to generate requirements'),
+  readiness: Readiness,
   summary: z.array(z.string()).describe('What the agent understands so far'),
   questions: z
     .array(ClarificationQuestionSchema)
@@ -61,10 +80,23 @@ export const ClarificationResultSchema = z.object({
   blockReason: z
     .string()
     .nullable()
-    .describe('Non-null if the agent cannot proceed (e.g. Strapi unavailable)'),
+    .describe('Non-null when readiness is BLOCKED'),
+  missingSlots: MissingSlotsSchema.optional().describe('Which slots still need filling'),
 });
 
 export type ClarificationResult = z.infer<typeof ClarificationResultSchema>;
+
+// ─── Approved Question Set ────────────────────────────────────────────────────
+
+export const ApprovedQuestionSetSchema = z.object({
+  approvedBy: z.string(),
+  approvedAt: z.string().datetime(),
+  questions: z.array(ClarificationQuestionSchema),
+  summary: z.array(z.string()),
+  readiness: Readiness,
+});
+
+export type ApprovedQuestionSet = z.infer<typeof ApprovedQuestionSetSchema>;
 
 // ─── Strapi Provider Interface ────────────────────────────────────────────────
 
@@ -125,7 +157,7 @@ export const BUSINESS_ARCHITECT_AGENT_CONTRACT: AgentContract = {
   capabilities: [
     'Analyze intake data and identify information gaps',
     'Generate targeted clarification questions per round',
-    'Assess readiness score (0–1) for requirements generation',
+    'Assess readiness status (NEEDS_MORE_INFO / READY_FOR_REQUIREMENTS / BLOCKED)',
     'Summarize current understanding after each round',
     'Adapt question strategy based on previous answers',
     'Read templates from Strapi CMS (when available)',
@@ -160,6 +192,11 @@ export const BusinessArchitectAgentInputSchema = z.object({
     )
     .default([])
     .describe('Answers from previous rounds'),
+  missingSlots: MissingSlotsSchema.optional().describe('Which slots need clarification'),
+  currentSummary: z
+    .array(z.string())
+    .default([])
+    .describe('Current understanding bullets from prior rounds'),
   strapiTemplates: z
     .array(
       z.object({

@@ -5,6 +5,7 @@ import {
   clarificationRouter,
   requirementsRouter,
   reviewsRouter,
+  sessionQuestionStore,
 } from './portal.js';
 import type {
   LeadIntake,
@@ -14,6 +15,7 @@ import type {
   UnderstandingSummary,
   PlanNextResult,
   ApproveQuestionsResult,
+  ReadinessStatus,
 } from './portal.js';
 
 const TEST_PROJECT_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -26,6 +28,8 @@ function createTestApp() {
   app.route('/api/reviews', reviewsRouter);
   return app;
 }
+
+const VALID_READINESS: ReadinessStatus[] = ['NEEDS_MORE_INFO', 'READY_FOR_REQUIREMENTS', 'BLOCKED'];
 
 describe('GET /api/projects/:id/intakes/:leadIntakeId', () => {
   let app: Hono;
@@ -56,6 +60,7 @@ describe('GET /api/clarification/sessions/:sessionId', () => {
   let app: Hono;
 
   beforeEach(() => {
+    sessionQuestionStore.clear();
     app = createTestApp();
   });
 
@@ -108,6 +113,7 @@ describe('POST /api/clarification/sessions/:sessionId/answers', () => {
   let app: Hono;
 
   beforeEach(() => {
+    sessionQuestionStore.clear();
     app = createTestApp();
   });
 
@@ -308,10 +314,11 @@ describe('POST /api/clarification/sessions/:sessionId/plan-next', () => {
   let app: Hono;
 
   beforeEach(() => {
+    sessionQuestionStore.clear();
     app = createTestApp();
   });
 
-  it('returns plan with readiness, summary, and questions for round 1', async () => {
+  it('returns plan with readiness enum, summary, and questions for round 1', async () => {
     const res = await app.request(
       '/api/clarification/sessions/session-001/plan-next',
       {
@@ -325,8 +332,8 @@ describe('POST /api/clarification/sessions/:sessionId/plan-next', () => {
     const body: PlanNextResult = await res.json();
     expect(body.sessionId).toBe('session-001');
     expect(body.round).toBe(1);
-    expect(body.readiness).toBeGreaterThanOrEqual(0);
-    expect(body.readiness).toBeLessThanOrEqual(1);
+    expect(VALID_READINESS).toContain(body.readiness);
+    expect(body.readiness).toBe('NEEDS_MORE_INFO');
     expect(body.summary.length).toBeGreaterThan(0);
     expect(body.questions.length).toBeGreaterThan(0);
     expect(body.blockReason).toBeNull();
@@ -367,7 +374,7 @@ describe('POST /api/clarification/sessions/:sessionId/plan-next', () => {
     expect(inputTypes).toContain('multi_select');
   });
 
-  it('round 2 has higher readiness and fewer questions', async () => {
+  it('round 2 returns NEEDS_MORE_INFO with fewer questions', async () => {
     const res = await app.request(
       '/api/clarification/sessions/session-001/plan-next',
       {
@@ -386,11 +393,11 @@ describe('POST /api/clarification/sessions/:sessionId/plan-next', () => {
     expect(res.status).toBe(200);
     const body: PlanNextResult = await res.json();
     expect(body.round).toBe(2);
-    expect(body.readiness).toBeGreaterThan(0.5);
+    expect(body.readiness).toBe('NEEDS_MORE_INFO');
 
     // Round 2 should have fewer questions than round 1
     const r1Res = await app.request(
-      '/api/clarification/sessions/session-001/plan-next',
+      '/api/clarification/sessions/session-002/plan-next',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -415,16 +422,44 @@ describe('POST /api/clarification/sessions/:sessionId/plan-next', () => {
     const withHelp = body.questions.filter((q) => q.helpText);
     expect(withHelp.length).toBeGreaterThan(0);
   });
+
+  it('stores questions as DRAFT after plan-next', async () => {
+    await app.request(
+      '/api/clarification/sessions/session-draft/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    const drafts = sessionQuestionStore.getDrafts('session-draft', 1);
+    expect(drafts.length).toBeGreaterThan(0);
+    for (const d of drafts) {
+      expect(d.status).toBe('DRAFT');
+    }
+  });
 });
 
 describe('POST /api/clarification/sessions/:sessionId/approve-questions', () => {
   let app: Hono;
 
   beforeEach(() => {
+    sessionQuestionStore.clear();
     app = createTestApp();
   });
 
   it('approves questions and returns published count', async () => {
+    // First create DRAFT questions via plan-next
+    await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
     const res = await app.request(
       '/api/clarification/sessions/session-001/approve-questions',
       {
@@ -465,6 +500,16 @@ describe('POST /api/clarification/sessions/:sessionId/approve-questions', () => 
   });
 
   it('removes questions by key', async () => {
+    // First create DRAFT questions via plan-next
+    await app.request(
+      '/api/clarification/sessions/session-001/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
     const res = await app.request(
       '/api/clarification/sessions/session-001/approve-questions',
       {
@@ -483,5 +528,170 @@ describe('POST /api/clarification/sessions/:sessionId/approve-questions', () => 
     expect(body.approved).toBe(true);
     // Original round 1 has 5 questions, removing 2 → 3
     expect(body.questionsPublished).toBe(3);
+  });
+});
+
+// ─── DRAFT/APPROVED Lifecycle ────────────────────────────────────────────────
+
+describe('DRAFT/APPROVED lifecycle', () => {
+  let app: Hono;
+
+  beforeEach(() => {
+    sessionQuestionStore.clear();
+    app = createTestApp();
+  });
+
+  it('prospect GET never shows DRAFT questions', async () => {
+    // Get baseline question count
+    const baseRes = await app.request('/api/clarification/sessions/session-lc');
+    const baseBody: ClarificationSession = await baseRes.json();
+    const baseCount = baseBody.questions.length;
+
+    // Create DRAFTs via plan-next
+    await app.request(
+      '/api/clarification/sessions/session-lc/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    // Verify DRAFTs exist internally
+    const drafts = sessionQuestionStore.getDrafts('session-lc', 1);
+    expect(drafts.length).toBeGreaterThan(0);
+
+    // Prospect GET should still show only base questions
+    const afterRes = await app.request('/api/clarification/sessions/session-lc');
+    const afterBody: ClarificationSession = await afterRes.json();
+    expect(afterBody.questions.length).toBe(baseCount);
+  });
+
+  it('approve-questions makes DRAFT questions visible to prospect', async () => {
+    // Get baseline
+    const baseRes = await app.request('/api/clarification/sessions/session-lc2');
+    const baseBody: ClarificationSession = await baseRes.json();
+    const baseCount = baseBody.questions.length;
+
+    // Create DRAFTs
+    await app.request(
+      '/api/clarification/sessions/session-lc2/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    // Approve
+    const approveRes = await app.request(
+      '/api/clarification/sessions/session-lc2/approve-questions',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1, approved: true }),
+      }
+    );
+    const approveBody: ApproveQuestionsResult = await approveRes.json();
+    expect(approveBody.questionsPublished).toBeGreaterThan(0);
+
+    // Prospect GET should now include approved questions
+    const afterRes = await app.request('/api/clarification/sessions/session-lc2');
+    const afterBody: ClarificationSession = await afterRes.json();
+    expect(afterBody.questions.length).toBe(baseCount + approveBody.questionsPublished);
+  });
+
+  it('readiness is a string enum, not a number', async () => {
+    const res = await app.request(
+      '/api/clarification/sessions/session-lc3/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    const body: PlanNextResult = await res.json();
+    expect(typeof body.readiness).toBe('string');
+    expect(VALID_READINESS).toContain(body.readiness);
+  });
+
+  it('answers endpoint validates against base + approved questions', async () => {
+    // Create and approve agent questions
+    await app.request(
+      '/api/clarification/sessions/session-lc4/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+    await app.request(
+      '/api/clarification/sessions/session-lc4/approve-questions',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1, approved: true }),
+      }
+    );
+
+    // Get current questions to know the full set
+    const sessionRes = await app.request('/api/clarification/sessions/session-lc4');
+    const session: ClarificationSession = await sessionRes.json();
+
+    // Answer all required questions
+    const allAnswers = session.questions
+      .filter((q) => q.required)
+      .map((q) => ({
+        questionId: q.id,
+        value: q.inputType === 'number' ? 3000 : q.inputType === 'multi_select' ? ['Option 1'] : 'Answer',
+      }));
+
+    const answerRes = await app.request(
+      '/api/clarification/sessions/session-lc4/answers',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: allAnswers }),
+      }
+    );
+
+    expect(answerRes.status).toBe(200);
+    const answerBody = await answerRes.json() as { success: boolean };
+    expect(answerBody.success).toBe(true);
+  });
+
+  it('edited questions reflect changes after approval', async () => {
+    // Create DRAFTs
+    await app.request(
+      '/api/clarification/sessions/session-lc5/plan-next',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round: 1 }),
+      }
+    );
+
+    // Approve with edits
+    await app.request(
+      '/api/clarification/sessions/session-lc5/approve-questions',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          round: 1,
+          approved: true,
+          editedQuestions: [
+            { key: 'target_audience', text: 'Describe your ideal customer profile.' },
+          ],
+        }),
+      }
+    );
+
+    // Get session — edited question should have new text
+    const sessionRes = await app.request('/api/clarification/sessions/session-lc5');
+    const session: ClarificationSession = await sessionRes.json();
+    const edited = session.questions.find((q) => q.text === 'Describe your ideal customer profile.');
+    expect(edited).toBeDefined();
   });
 });

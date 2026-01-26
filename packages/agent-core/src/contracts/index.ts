@@ -105,6 +105,9 @@ export {
   ClarificationQuestionSchema,
   ClarificationResultSchema,
   ClarificationInputType,
+  Readiness,
+  MissingSlotsSchema,
+  ApprovedQuestionSetSchema,
   BUSINESS_ARCHITECT_AGENT_FRAMEWORKS,
   BUSINESS_ARCHITECT_AGENT_MODEL,
   BUSINESS_ARCHITECT_AGENT_COST_CAP,
@@ -115,6 +118,8 @@ export type {
   BusinessArchitectAgentOutput,
   ClarificationQuestion,
   ClarificationResult,
+  MissingSlots,
+  ApprovedQuestionSet,
   StrapiProvider,
   StrapiContentItem,
 } from './business-architect-agent.js';

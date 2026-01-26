@@ -138,6 +138,10 @@ export {
   registerBuildMocks,
 } from './build-mocks.js';
 
+// Business Architect Planner (Step 3)
+export { BusinessArchitectPlanner, createMockPlannerOutput } from './business-architect-planner.js';
+export type { PlannerInput, PlannerResult, PlannerConfig } from './business-architect-planner.js';
+
 // Event Bus (Event Bus A)
 export {
   InMemoryEventStore,

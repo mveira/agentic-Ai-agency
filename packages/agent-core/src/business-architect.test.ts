@@ -4,6 +4,8 @@ import {
   ClarificationResultSchema,
   BusinessArchitectAgentInputSchema,
   BusinessArchitectAgentOutputSchema,
+  MissingSlotsSchema,
+  ApprovedQuestionSetSchema,
   InMemoryStrapiProvider,
   BUSINESS_ARCHITECT_AGENT_CONTRACT,
 } from './contracts/business-architect-agent.js';
@@ -84,21 +86,22 @@ describe('ClarificationQuestionSchema', () => {
 // ─── ClarificationResultSchema ────────────────────────────────────────────────
 
 describe('ClarificationResultSchema', () => {
-  it('validates a result with questions and no block', () => {
+  it('validates NEEDS_MORE_INFO result with questions', () => {
     const result = {
-      readiness: 0.3,
+      readiness: 'NEEDS_MORE_INFO',
       summary: ['Target audience: SaaS founders', 'Budget: £2k-5k'],
       questions: [
         { key: 'timeline', text: 'Launch date?', inputType: 'date', required: true },
       ],
       blockReason: null,
+      missingSlots: { budget: false, timeline: true, offer: true, channel: false, goals: false, conflicts: false },
     };
     expect(ClarificationResultSchema.safeParse(result).success).toBe(true);
   });
 
-  it('validates a fully ready result with no questions', () => {
+  it('validates READY_FOR_REQUIREMENTS with no questions', () => {
     const result = {
-      readiness: 1.0,
+      readiness: 'READY_FOR_REQUIREMENTS',
       summary: ['All slots filled', 'Ready for requirements generation'],
       questions: [],
       blockReason: null,
@@ -106,33 +109,95 @@ describe('ClarificationResultSchema', () => {
     const parsed = ClarificationResultSchema.safeParse(result);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.readiness).toBe(1.0);
+      expect(parsed.data.readiness).toBe('READY_FOR_REQUIREMENTS');
       expect(parsed.data.questions).toHaveLength(0);
     }
   });
 
-  it('validates a blocked result', () => {
+  it('validates a BLOCKED result', () => {
     const result = {
-      readiness: 0,
+      readiness: 'BLOCKED',
       summary: [],
       questions: [],
-      blockReason: 'Strapi CMS is unavailable — cannot fetch industry templates',
+      blockReason: 'STRAPI_UNAVAILABLE',
     };
     const parsed = ClarificationResultSchema.safeParse(result);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.blockReason).toContain('Strapi');
+      expect(parsed.data.readiness).toBe('BLOCKED');
+      expect(parsed.data.blockReason).toBe('STRAPI_UNAVAILABLE');
     }
   });
 
-  it('rejects readiness > 1', () => {
-    const result = { readiness: 1.5, summary: [], questions: [], blockReason: null };
+  it('rejects invalid readiness value', () => {
+    const result = { readiness: 'UNKNOWN_STATE', summary: [], questions: [], blockReason: null };
     expect(ClarificationResultSchema.safeParse(result).success).toBe(false);
   });
 
-  it('rejects readiness < 0', () => {
-    const result = { readiness: -0.1, summary: [], questions: [], blockReason: null };
+  it('rejects numeric readiness (old format)', () => {
+    const result = { readiness: 0.5, summary: [], questions: [], blockReason: null };
     expect(ClarificationResultSchema.safeParse(result).success).toBe(false);
+  });
+});
+
+// ─── MissingSlotsSchema ───────────────────────────────────────────────────────
+
+describe('MissingSlotsSchema', () => {
+  it('validates all slots as booleans', () => {
+    const slots = { budget: true, timeline: false, offer: true, channel: false, goals: true, conflicts: false };
+    const result = MissingSlotsSchema.safeParse(slots);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.budget).toBe(true);
+      expect(result.data.timeline).toBe(false);
+    }
+  });
+
+  it('defaults all slots to false', () => {
+    const result = MissingSlotsSchema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.budget).toBe(false);
+      expect(result.data.goals).toBe(false);
+    }
+  });
+});
+
+// ─── ApprovedQuestionSetSchema ────────────────────────────────────────────────
+
+describe('ApprovedQuestionSetSchema', () => {
+  it('validates an approved question set', () => {
+    const qs = {
+      approvedBy: 'agency-user-001',
+      approvedAt: '2026-01-26T12:00:00Z',
+      questions: [
+        { key: 'budget', text: 'What is your budget?', inputType: 'number', required: true },
+      ],
+      summary: ['Budget question approved'],
+      readiness: 'NEEDS_MORE_INFO',
+    };
+    expect(ApprovedQuestionSetSchema.safeParse(qs).success).toBe(true);
+  });
+
+  it('rejects missing approvedBy', () => {
+    const qs = {
+      approvedAt: '2026-01-26T12:00:00Z',
+      questions: [],
+      summary: [],
+      readiness: 'NEEDS_MORE_INFO',
+    };
+    expect(ApprovedQuestionSetSchema.safeParse(qs).success).toBe(false);
+  });
+
+  it('rejects invalid approvedAt datetime', () => {
+    const qs = {
+      approvedBy: 'user-1',
+      approvedAt: 'not-a-date',
+      questions: [],
+      summary: [],
+      readiness: 'NEEDS_MORE_INFO',
+    };
+    expect(ApprovedQuestionSetSchema.safeParse(qs).success).toBe(false);
   });
 });
 
@@ -152,7 +217,7 @@ describe('BusinessArchitectAgentInputSchema', () => {
     expect(BusinessArchitectAgentInputSchema.safeParse(validInput).success).toBe(true);
   });
 
-  it('validates round 2 with prior answers', () => {
+  it('validates round 2 with prior answers and missingSlots', () => {
     const round2 = {
       ...validInput,
       round: 2,
@@ -161,6 +226,8 @@ describe('BusinessArchitectAgentInputSchema', () => {
         { key: 'services', value: ['SEO', 'PPC'] },
         { key: 'budget', value: 3000 },
       ],
+      missingSlots: { budget: false, timeline: true, offer: false, channel: false, goals: false, conflicts: false },
+      currentSummary: ['Target audience identified', 'Budget confirmed'],
     };
     expect(BusinessArchitectAgentInputSchema.safeParse(round2).success).toBe(true);
   });
@@ -183,15 +250,23 @@ describe('BusinessArchitectAgentInputSchema', () => {
       expect(result.data.priorAnswers).toEqual([]);
     }
   });
+
+  it('defaults currentSummary to empty array', () => {
+    const result = BusinessArchitectAgentInputSchema.safeParse(validInput);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.currentSummary).toEqual([]);
+    }
+  });
 });
 
 // ─── BusinessArchitectAgentOutputSchema ───────────────────────────────────────
 
 describe('BusinessArchitectAgentOutputSchema', () => {
-  it('validates a full agent output', () => {
+  it('validates a full agent output with NEEDS_MORE_INFO', () => {
     const output = {
       result: {
-        readiness: 0.6,
+        readiness: 'NEEDS_MORE_INFO',
         summary: ['Understood target audience', 'Budget range confirmed'],
         questions: [
           {
@@ -204,12 +279,28 @@ describe('BusinessArchitectAgentOutputSchema', () => {
           },
         ],
         blockReason: null,
+        missingSlots: { budget: false, timeline: true, offer: false, channel: false, goals: false, conflicts: false },
       },
       assumptions: ['Client prefers modern aesthetic based on website analysis'],
       unknowns: ['Competitor pricing not yet known'],
       next_actions: ['Complete round 2 clarification', 'Fetch competitor data'],
     };
     expect(BusinessArchitectAgentOutputSchema.safeParse(output).success).toBe(true);
+  });
+
+  it('rejects output with invalid readiness', () => {
+    const output = {
+      result: {
+        readiness: 0.6,
+        summary: [],
+        questions: [],
+        blockReason: null,
+      },
+      assumptions: [],
+      unknowns: [],
+      next_actions: [],
+    };
+    expect(BusinessArchitectAgentOutputSchema.safeParse(output).success).toBe(false);
   });
 });
 

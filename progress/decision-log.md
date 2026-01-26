@@ -51,6 +51,35 @@ Use this format for all architectural and technical decisions:
   - Rejected batches trigger re-planning
 - **Status:** Approved
 
+### Decision: Readiness enum replacing numeric score
+- **Date:** 2026-01-26
+- **Context:** Original readiness was a 0–1 float which was ambiguous and hard to use in decision logic
+- **Decision:** Replace readiness with string enum: NEEDS_MORE_INFO | READY_FOR_REQUIREMENTS | BLOCKED
+- **Reason:** Discrete states are unambiguous, enable clean branching logic, and align with the actual decision points in the clarification flow
+- **Alternatives considered:**
+  - Keep numeric 0–1 with thresholds (ambiguous, hard to maintain threshold values)
+  - Ordinal integers 0/1/2 (less readable, no semantic meaning)
+- **Impact:**
+  - All schemas, API responses, and tests updated to use enum
+  - Dashboard can switch on exact values instead of threshold comparisons
+  - Breaking change from earlier stub API (tests updated)
+- **Status:** Approved
+
+### Decision: DRAFT/APPROVED lifecycle for agent-planned questions
+- **Date:** 2026-01-26
+- **Context:** plan-next generates questions but they must not reach prospects without agency review
+- **Decision:** Implement SessionQuestionStore with DRAFT → APPROVED lifecycle; prospect-facing GET only returns APPROVED questions
+- **Reason:** Strict separation ensures no unreviewed questions leak to clients; agency maintains full editorial control
+- **Alternatives considered:**
+  - Flag-based visibility on question objects (harder to enforce, easy to forget)
+  - Separate approved-questions endpoint (more API surface, same behavior)
+- **Impact:**
+  - plan-next stores DRAFT (invisible to prospects)
+  - approve-questions promotes to APPROVED (visible to prospects)
+  - Agency can remove/edit during approval
+  - Answers endpoint validates against base + APPROVED questions only
+- **Status:** Approved
+
 ---
 
 ## Portal UX — Hybrid Clarification Flow

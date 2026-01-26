@@ -843,3 +843,72 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - Committed as 'Add BusinessArchitectAgent and clarification planning'
 
 ---
+
+## Step 3 – BusinessArchitectAgent Real Clarification Planning
+
+### Task: Update schemas — readiness enum + ApprovedQuestionSet + MissingSlots
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/business-architect-agent.ts (MODIFIED)
+  - packages/agent-core/src/contracts/index.ts (MODIFIED — added Readiness, MissingSlotsSchema, ApprovedQuestionSetSchema exports)
+- **Tests added/updated:**
+  - packages/agent-core/src/business-architect.test.ts (rewritten — 35 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (35 pass)
+  - pnpm --filter @agency/agent-core test -- contracts.test.ts (49 pass)
+- **Notes / blockers:**
+  - readiness changed from z.number().min(0).max(1) to Readiness enum: NEEDS_MORE_INFO | READY_FOR_REQUIREMENTS | BLOCKED
+  - Added MissingSlotsSchema (budget, timeline, offer, channel, goals, conflicts — booleans, default false)
+  - Added ApprovedQuestionSetSchema (approvedBy, approvedAt, questions[], summary[], readiness)
+  - Added missingSlots to ClarificationResultSchema (optional)
+  - Added missingSlots + currentSummary to BusinessArchitectAgentInputSchema
+
+### Task: Build BusinessArchitectPlanner with Strapi + agent integration
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/business-architect-planner.ts (NEW)
+  - packages/agent-core/src/business-architect-planner.test.ts (NEW)
+- **Tests added/updated:**
+  - business-architect-planner.test.ts — 17 tests (planner lifecycle + computeMissingSlots + mockOutput)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (262 pass)
+- **Notes / blockers:**
+  - Orchestrates: Strapi availability check → template fetch → prompt build → LLM call → schema validation
+  - Returns BLOCKED if Strapi unavailable or fetch fails
+  - Validates output against BusinessArchitectAgentOutputSchema then ClarificationResultSchema
+  - Static computeMissingSlots() uses key aliases (budget/budgetRange/monthly_budget etc.)
+  - createMockPlannerOutput() for test consumers
+
+### Task: Replace portal stubs with DRAFT/APPROVED lifecycle
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/portal.ts (REWRITTEN — SessionQuestionStore, ReadinessStatus enum, DRAFT/APPROVED gate)
+  - apps/api/src/routes/portal.test.ts (REWRITTEN — 28 tests with lifecycle coverage)
+- **Tests added/updated:**
+  - portal.test.ts — 28 tests (up from 22; +6 lifecycle tests)
+- **Commands run:**
+  - pnpm test — 416 total tests pass
+- **Notes / blockers:**
+  - SessionQuestionStore: storeDraft(), approve(), getApproved(), getDrafts(), clear()
+  - PlanNextResult.readiness changed from number to ReadinessStatus enum
+  - plan-next stores DRAFT via sessionQuestionStore.storeDraft()
+  - approve-questions promotes DRAFT→APPROVED with optional removedKeys/editedQuestions
+  - GET /sessions only returns base + APPROVED questions (no DRAFTs)
+  - POST /answers validates against base + APPROVED questions
+
+### Task: Exports, verification, and commit
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/index.ts (MODIFIED — added BusinessArchitectPlanner exports)
+  - progress/task-log.md, progress/decision-log.md
+- **Tests added/updated:**
+  - N/A (verification)
+- **Commands run:**
+  - pnpm test — 416 tests pass (262 agent-core + 54 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Exported: BusinessArchitectPlanner, createMockPlannerOutput, PlannerInput, PlannerResult, PlannerConfig
+  - Committed as 'Add BusinessArchitectAgent with approval-gated clarification planning'
+
+---
