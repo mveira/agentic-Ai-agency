@@ -5,12 +5,14 @@ import {
   BuildOrchestrator,
   BuildRequestSchema,
   InMemoryRequirementsProvider,
+  StoreBackedRequirementsProvider,
   createMockRouter,
   registerBuildMocks,
 } from '@agency/agent-core';
-import type { MockLLMAdapter } from '@agency/agent-core';
+import type { MockLLMAdapter, RequirementsProvider } from '@agency/agent-core';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requirementsVersionStore } from './requirements-v2.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const QUESTIONS_PATH = join(__dirname, '../../../../../agency-questions/questions');
@@ -19,12 +21,30 @@ const buildRouter = new Hono();
 
 /**
  * In-memory stores (replaced by DB in production)
+ *
+ * Uses StoreBackedRequirementsProvider wrapping the shared requirementsVersionStore
+ * from requirements-v2. Falls back to InMemoryRequirementsProvider for pre-populated
+ * test data.
  */
-const requirementsProvider = new InMemoryRequirementsProvider();
+const legacyProvider = new InMemoryRequirementsProvider();
+const storeBackedProvider = new StoreBackedRequirementsProvider(requirementsVersionStore);
+
+/**
+ * Combined provider: tries StoreBackedRequirementsProvider first,
+ * falls back to legacyProvider for backward compatibility.
+ */
+const requirementsProvider: RequirementsProvider = {
+  async getRequirements(projectId: string, versionId: string) {
+    const storeResult = await storeBackedProvider.getRequirements(projectId, versionId);
+    if (storeResult.exists) return storeResult;
+    return legacyProvider.getRequirements(projectId, versionId);
+  },
+};
+
 const enhancementApprovals = new Map<string, Map<string, 'pending' | 'approved' | 'rejected'>>();
 
-// Pre-populate a test project for development
-requirementsProvider.set(
+// Pre-populate a test project for development (legacy fallback)
+legacyProvider.set(
   '550e8400-e29b-41d4-a716-446655440000',
   'v1.0',
   { exists: true, assumptionsApproved: true, data: {} }

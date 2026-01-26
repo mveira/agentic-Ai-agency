@@ -167,3 +167,50 @@ export type {
   EventWorkerConfig,
   ProcessResult,
 } from './event-worker.js';
+
+// Requirements Schemas (Step 4)
+export {
+  RequirementSchema,
+  AssumptionSchema,
+  RequirementsBundleSchema,
+  ConfirmPayloadSchema,
+  ChangeRequestSchema,
+  RequirementsVersionSchema,
+} from './requirements-schemas.js';
+export type {
+  Requirement as RequirementItem,
+  Assumption as AssumptionItem,
+  RequirementsBundle,
+  ConfirmPayload,
+  ChangeRequest,
+  RequirementsVersion as RequirementsVersionRecord,
+} from './requirements-schemas.js';
+
+// Requirements Version Store (Step 4)
+export {
+  InMemoryRequirementsVersionStore,
+  StoreBackedRequirementsProvider,
+} from './requirements-store.js';
+export type { RequirementsVersionStore } from './requirements-store.js';
+
+// Requirements Engineer Planner (Step 4)
+export {
+  RequirementsEngineerPlanner,
+  createMockBundleOutput,
+} from './requirements-engineer-planner.js';
+export type {
+  RequirementsPlannerInput,
+  RequirementsPlannerResult,
+  RequirementsPlannerConfig,
+} from './requirements-engineer-planner.js';
+
+// Requirements Hooks (Step 4)
+export {
+  buildGenerateHooks,
+  buildReviewApprovedHooks,
+} from './requirements-hooks.js';
+export type {
+  MilestoneHook,
+  GenerateHookParams,
+  ReviewApprovedHookParams,
+} from './requirements-hooks.js';

@@ -12,15 +12,17 @@ import {
   UX_DESIGN_AGENT_CONTRACT,
   QUALITY_CONTROL_AGENT_CONTRACT,
   BUSINESS_ARCHITECT_AGENT_CONTRACT,
+  REQUIREMENTS_ENGINEER_AGENT_CONTRACT,
   ResearchAgentInputSchema,
   UXDesignAgentInputSchema,
   BusinessArchitectAgentInputSchema,
+  RequirementsEngineerAgentInputSchema,
   shouldBlock,
 } from './contracts/index.js';
 
 describe('Agent Contracts', () => {
-  it('has all 7 required agents defined', () => {
-    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(7);
+  it('has all 8 required agents defined', () => {
+    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(8);
     expect(ALL_AGENT_CONTRACTS['research-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['strategy-funnel-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['copy-messaging-agent']).toBeDefined();
@@ -28,6 +30,7 @@ describe('Agent Contracts', () => {
     expect(ALL_AGENT_CONTRACTS['ux-design-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['quality-control-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['business-architect-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['requirements-engineer-agent']).toBeDefined();
   });
 
   it('getAgentContract returns correct contract', () => {
@@ -50,6 +53,7 @@ describe('Agent Contracts', () => {
       UX_DESIGN_AGENT_CONTRACT,
       QUALITY_CONTROL_AGENT_CONTRACT,
       BUSINESS_ARCHITECT_AGENT_CONTRACT,
+      REQUIREMENTS_ENGINEER_AGENT_CONTRACT,
     ];
 
     it.each(contracts)('$agentId has required fields', (contract) => {
@@ -320,6 +324,66 @@ describe('Business Architect Agent', () => {
     const contract = getAgentContract('business-architect-agent');
     expect(contract).toBe(BUSINESS_ARCHITECT_AGENT_CONTRACT);
     expect(contract?.agentId).toBe('business-architect-agent');
+  });
+});
+
+describe('Requirements Engineer Agent', () => {
+  it('does NOT gather information (constraint)', () => {
+    const constraints = REQUIREMENTS_ENGINEER_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('not');
+    expect(constraints).toContain('gather');
+  });
+
+  it('does NOT skip assumptions (constraint)', () => {
+    const constraints = REQUIREMENTS_ENGINEER_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('not');
+    expect(constraints).toContain('assumptions');
+  });
+
+  it('read-only Strapi access', () => {
+    const constraints = REQUIREMENTS_ENGINEER_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('read-only');
+  });
+
+  it('has market-awareness and offer-economics frameworks', () => {
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['requirements-engineer-agent']).toContain('market-awareness');
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['requirements-engineer-agent']).toContain('offer-economics');
+  });
+
+  it('has cost cap of 0.75', () => {
+    expect(AGENT_COST_CAPS['requirements-engineer-agent']).toBe(0.75);
+  });
+
+  it('routes to claude-3-sonnet', () => {
+    expect(AGENT_MODEL_ROUTING['requirements-engineer-agent']).toBe('claude-3-sonnet');
+  });
+
+  it('RequirementsEngineerAgentInputSchema validates correct input', () => {
+    const validInput = {
+      projectId: '550e8400-e29b-41d4-a716-446655440000',
+      factsSnapshot: {
+        summary: ['Target audience: SaaS founders'],
+        structuredAnswers: [{ key: 'budget', value: 3000 }],
+      },
+    };
+    expect(RequirementsEngineerAgentInputSchema.safeParse(validInput).success).toBe(true);
+  });
+
+  it('RequirementsEngineerAgentInputSchema rejects invalid projectId', () => {
+    const invalid = {
+      projectId: 'not-a-uuid',
+      factsSnapshot: {
+        summary: [],
+        structuredAnswers: [],
+      },
+    };
+    expect(RequirementsEngineerAgentInputSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it('getAgentContract returns Requirements Engineer contract', () => {
+    const contract = getAgentContract('requirements-engineer-agent');
+    expect(contract).toBe(REQUIREMENTS_ENGINEER_AGENT_CONTRACT);
+    expect(contract?.agentId).toBe('requirements-engineer-agent');
   });
 });
 

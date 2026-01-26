@@ -21,6 +21,62 @@ Use this format for all architectural and technical decisions:
 
 ---
 
+## Step 4 – Requirements + Assumptions Loop
+
+### Decision: New route file for project-scoped requirements endpoints
+- **Date:** 2026-01-26
+- **Context:** Requirements V2 endpoints need project-scoped routes; existing portal.ts stubs should remain untouched
+- **Decision:** Create apps/api/src/routes/requirements-v2.ts for project-scoped endpoints; keep existing portal.ts stubs for backward compatibility
+- **Reason:** Avoids breaking existing dashboard integration; clean separation of new logic from legacy stubs
+- **Alternatives considered:**
+  - Modify portal.ts directly (risk breaking 28 existing tests, mixing concerns)
+  - Create a middleware wrapper (unnecessary complexity)
+- **Impact:**
+  - Portal stubs untouched, all 28 portal tests still green
+  - New router mounted at /api/projects with requirements sub-routes
+- **Status:** Approved
+
+### Decision: InMemoryRequirementsVersionStore with structuredClone immutability
+- **Date:** 2026-01-26
+- **Context:** Requirements versions must be immutable once stored; mutations should not affect stored data
+- **Decision:** Use structuredClone on store and retrieval to ensure immutability
+- **Reason:** Consistent with existing InMemoryEventStore pattern; prevents accidental mutation bugs in tests and production
+- **Alternatives considered:**
+  - Deep freeze (breaks mutations entirely, harder to work with)
+  - No cloning (allows mutation bugs, inconsistent with persistence semantics)
+- **Impact:**
+  - Stored versions cannot be mutated after storage
+  - Each get() returns a fresh copy safe to modify
+- **Status:** Approved
+
+### Decision: Combined RequirementsProvider for backward compatibility
+- **Date:** 2026-01-26
+- **Context:** build.ts uses InMemoryRequirementsProvider with pre-populated test data; new store-backed provider needs to coexist
+- **Decision:** Combined provider tries StoreBackedRequirementsProvider first, falls back to legacy InMemoryRequirementsProvider
+- **Reason:** Zero disruption to existing build tests; gradual migration path
+- **Alternatives considered:**
+  - Replace entirely (breaks 8 existing build tests)
+  - Dual registration (more complex, same effect)
+- **Impact:**
+  - All 8 build tests still pass unchanged
+  - New requirements versions automatically available to BuildOrchestrator
+- **Status:** Approved
+
+### Decision: Synchronous auto-regeneration on rejection
+- **Date:** 2026-01-26
+- **Context:** When prospect rejects requirements/assumptions, a new version must be generated
+- **Decision:** Confirm endpoint calls planner inline (synchronously); async via event bus can be added later
+- **Reason:** Simplicity for MVP; mock LLM makes this fast in tests; production can switch to async without API contract change
+- **Alternatives considered:**
+  - Async regeneration via event bus (premature complexity)
+  - Client polling (worse UX, more API calls)
+- **Impact:**
+  - Confirm endpoint returns newVersionId immediately when rejections exist
+  - Production can add async via event bus later without breaking API contract
+- **Status:** Approved
+
+---
+
 ## BusinessArchitectAgent — Clarification Rounds
 
 ### Decision: StrapiProvider interface with InMemory test implementation

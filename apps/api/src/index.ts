@@ -6,6 +6,7 @@ import { spendRouter } from './routes/spend.js';
 import { projectConfigRouter } from './routes/project-config.js';
 import { buildRouter } from './routes/build.js';
 import { portalRouter, clarificationRouter, requirementsRouter, reviewsRouter } from './routes/portal.js';
+import { requirementsV2Router } from './routes/requirements-v2.js';
 
 const app = new Hono();
 
@@ -31,6 +32,7 @@ app.route('/api/projects', portalRouter);
 app.route('/api/clarification', clarificationRouter);
 app.route('/api/requirements', requirementsRouter);
 app.route('/api/reviews', reviewsRouter);
+app.route('/api/projects', requirementsV2Router);
 
 // 404 handler
 app.notFound((c) => {

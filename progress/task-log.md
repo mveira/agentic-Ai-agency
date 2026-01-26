@@ -912,3 +912,143 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - Committed as 'Add BusinessArchitectAgent with approval-gated clarification planning'
 
 ---
+
+## Step 4 – Requirements + Assumptions Loop (Auto-Regenerate on Change)
+
+### Task: Create requirements schemas (Step 4.1)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/requirements-schemas.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/requirements-schemas.test.ts (23 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (23 pass)
+- **Notes / blockers:**
+  - RequirementSchema: id, title, details, priority (MUST|SHOULD|COULD), category?
+  - AssumptionSchema: id, statement, reason
+  - RequirementsBundleSchema: requirements[].min(1), assumptions[].min(1), openQuestions?
+  - ConfirmPayloadSchema: requirements[{id, confirmed, changeNote?}], assumptions[{id, status, comment?}]
+  - RequirementsVersionSchema: versionId, projectId, versionNumber, status, factsSnapshot, changeRequests, createdAt
+  - ChangeRequestSchema: type (requirement|assumption), itemId, notes
+
+### Task: Create requirements version store (Step 4.1)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/requirements-store.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/requirements-store.test.ts (17 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (17 pass)
+- **Notes / blockers:**
+  - RequirementsVersionStore interface: store(), get(), getLatest(), listVersions()
+  - InMemoryRequirementsVersionStore with structuredClone for immutability
+  - StoreBackedRequirementsProvider bridges store to RequirementsProvider interface
+  - clear() method for test reset
+
+### Task: Create RequirementsEngineerAgent contract (Step 4.2)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/requirements-engineer-agent.ts (NEW)
+  - packages/agent-core/src/contracts/index.ts (MODIFIED)
+- **Tests added/updated:**
+  - packages/agent-core/src/contracts.test.ts (updated — 59 tests, was 49)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (59 pass)
+- **Notes / blockers:**
+  - agentId: requirements-engineer-agent, model: claude-3-sonnet, cost cap: £0.75
+  - Agent count: 7 → 8
+  - Capabilities: MoSCoW prioritization, change request incorporation, Strapi rubrics
+  - Constraints: no gathering, no skipping assumptions, no overriding confirmed, read-only Strapi
+  - Frameworks: market-awareness, offer-economics
+
+### Task: Create RequirementsEngineerPlanner (Step 4.3)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/requirements-engineer-planner.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/requirements-engineer-planner.test.ts (16 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (16 pass)
+- **Notes / blockers:**
+  - Follows BusinessArchitectPlanner pattern: Strapi check → rubric fetch → prompt build → LLM → validate
+  - Returns STRAPI_UNAVAILABLE/STRAPI_FETCH_FAILED on Strapi issues
+  - Validates against both AgentOutputSchema and direct RequirementsBundleSchema
+  - createMockBundleOutput() helper for test consumers
+  - Custom CapturingLLMAdapter and FailingLLMAdapter for test assertions
+
+### Task: Create API routes for generate + confirm + auto-regen (Step 4.4)
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/requirements-v2.ts (NEW)
+  - apps/api/src/index.ts (MODIFIED — mounted requirementsV2Router)
+- **Tests added/updated:**
+  - apps/api/src/routes/requirements-v2.test.ts (19 tests)
+- **Commands run:**
+  - pnpm --filter @agency/api test (19 pass)
+- **Notes / blockers:**
+  - POST /:projectId/requirements/generate — generates v1 (or vN+1)
+  - GET /:projectId/requirements/:versionId — returns specific version
+  - GET /:projectId/requirements/latest — returns latest version
+  - GET /:projectId/requirements — lists all versions
+  - POST /:projectId/requirements/:versionId/confirm — persists decisions; auto-regenerates on rejection
+  - Confirm logic: all ok → confirmed; any rejection → regenerating + new version stored
+
+### Task: Add review handoff endpoints (Step 4.5)
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/requirements-v2.ts (EXTENDED)
+- **Tests added/updated:**
+  - apps/api/src/routes/requirements-v2.test.ts (included in 19 tests)
+- **Commands run:**
+  - pnpm --filter @agency/api test (pass)
+- **Notes / blockers:**
+  - POST /:projectId/requirements/:versionId/review/suggest — APPROVED|NEEDS_CLARIFICATION|NOT_A_FIT
+  - POST /:projectId/requirements/:versionId/review/decide — APPROVED|REJECTED + notes
+  - NEEDS_CLARIFICATION includes clarificationTargets[] for targeted session
+
+### Task: Create GHL milestone hooks (Step 4.6)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/requirements-hooks.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/requirements-hooks.test.ts (5 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (5 pass)
+- **Notes / blockers:**
+  - buildGenerateHooks: move_stage to 'Requirements Review'
+  - buildReviewApprovedHooks: move_stage to 'Build Ready' + trigger_workflow for notification
+  - All actions validate against GHLActionSchema
+
+### Task: Wire store to BuildOrchestrator (Step 4.7)
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/build.ts (MODIFIED)
+- **Tests added/updated:**
+  - apps/api/src/routes/build.test.ts (8 existing tests still pass)
+- **Commands run:**
+  - pnpm --filter @agency/api test (8 pass)
+- **Notes / blockers:**
+  - StoreBackedRequirementsProvider wraps shared requirementsVersionStore
+  - Combined provider: tries store-backed first, falls back to legacy InMemoryRequirementsProvider
+  - All 8 existing build tests still green
+
+### Task: Exports, verification, and commit (Step 4.8)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/index.ts (MODIFIED — added all Step 4 exports)
+  - progress/task-log.md, progress/decision-log.md
+- **Tests added/updated:**
+  - N/A (verification)
+- **Commands run:**
+  - pnpm test — 506 tests pass (333 agent-core + 73 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Exported: RequirementSchema, AssumptionSchema, RequirementsBundleSchema, ConfirmPayloadSchema, ChangeRequestSchema, RequirementsVersionSchema
+  - Exported: InMemoryRequirementsVersionStore, StoreBackedRequirementsProvider
+  - Exported: RequirementsEngineerPlanner, createMockBundleOutput
+  - Exported: buildGenerateHooks, buildReviewApprovedHooks
+  - All 28 portal.test.ts tests still green (stubs untouched)
+  - All 8 build.test.ts tests still green (updated integration)
+
+---
