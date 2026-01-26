@@ -8,6 +8,7 @@ import {
   timestamp,
   jsonb,
   pgEnum,
+  boolean,
 } from 'drizzle-orm/pg-core';
 
 /**
@@ -22,7 +23,58 @@ export const taskRunStatusEnum = pgEnum('task_run_status', [
 ]);
 
 /**
- * Clients table - organizations/businesses using the system.
+ * Org type enum.
+ */
+export const orgTypeEnum = pgEnum('org_type', ['agency', 'client']);
+
+/**
+ * Membership role enum.
+ */
+export const membershipRoleEnum = pgEnum('membership_role', [
+  'agency_admin',
+  'agency_operator',
+  'client_admin',
+  'client_member',
+  'viewer',
+]);
+
+/**
+ * Orgs table - agencies and client organizations.
+ */
+export const orgs = pgTable('orgs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  type: orgTypeEnum('type').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Users table - user profiles (id matches auth provider user id).
+ */
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey(),
+  email: varchar('email', { length: 255 }).unique().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Memberships table - links users to orgs with roles.
+ */
+export const memberships = pgTable('memberships', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id')
+    .references(() => orgs.id)
+    .notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  role: membershipRoleEnum('role').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Clients table - legacy organizations/businesses using the system.
+ * Retained for backward compatibility; new code should use orgs.
  */
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -35,18 +87,19 @@ export const clients = pgTable('clients', {
 });
 
 /**
- * Projects table - work streams within a client.
+ * Projects table - work streams owned by an org.
  */
 export const projects = pgTable('projects', {
   id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => orgs.id),
   clientId: uuid('client_id')
-    .references(() => clients.id)
-    .notNull(),
+    .references(() => clients.id),
   name: varchar('name', { length: 255 }).notNull(),
   slug: varchar('slug', { length: 100 }).notNull(),
   description: text('description'),
   dailyBudgetGbp: decimal('daily_budget_gbp', { precision: 10, scale: 4 }).notNull(),
   monthlyBudgetGbp: decimal('monthly_budget_gbp', { precision: 10, scale: 4 }).notNull(),
+  dryRun: boolean('dry_run').default(false).notNull(),
   isActive: integer('is_active').default(1).notNull(),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

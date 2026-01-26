@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@agency/agent-core": "workspace:*",
+    "@agency/auth": "workspace:*",
     "@agency/telemetry": "workspace:*",
     "@agency/prompt-library": "workspace:*",
     "@hono/node-server": "^1.8.0",
