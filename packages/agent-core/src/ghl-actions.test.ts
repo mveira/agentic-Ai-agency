@@ -251,6 +251,70 @@ describe('GHL Actions', () => {
     });
   });
 
+  describe('telemetry coverage', () => {
+    it('records telemetry for every execution', async () => {
+      await executor.execute({ action: moveStage, config: liveProject });
+      const log = executor.getLog();
+      expect(log).toHaveLength(1);
+      expect(log[0]!.projectId).toBe('agency-001');
+      expect(log[0]!.actionType).toBe('move_stage');
+      expect(log[0]!.executed).toBe(true);
+      expect(log[0]!.dryRun).toBe(false);
+      expect(log[0]!.blocked).toBe(false);
+      expect(log[0]!.timestamp).toBeDefined();
+    });
+
+    it('records telemetry for blocked actions', async () => {
+      const unknownStage: MoveStageAction = { ...moveStage, stageId: 'stage-unknown' };
+      await executor.execute({ action: unknownStage, config: liveProject });
+      const log = executor.getLog();
+      expect(log).toHaveLength(1);
+      expect(log[0]!.blocked).toBe(true);
+      expect(log[0]!.blockedReason).toBe('stage-not-allowlisted');
+    });
+
+    it('records telemetry for dryRun actions', async () => {
+      await executor.execute({ action: moveStage, config: dryRunProject });
+      const log = executor.getLog();
+      expect(log).toHaveLength(1);
+      expect(log[0]!.dryRun).toBe(true);
+      expect(log[0]!.executed).toBe(false);
+    });
+
+    it('records telemetry for duplicate-blocked actions', async () => {
+      await executor.execute({ action: moveStage, config: liveProject });
+      await executor.execute({ action: moveStage, config: liveProject });
+      const log = executor.getLog();
+      expect(log).toHaveLength(2);
+      expect(log[1]!.blockedReason).toBe('duplicate-execution');
+    });
+
+    it('filters log by project', async () => {
+      await executor.execute({ action: moveStage, config: liveProject });
+      await executor.execute({ action: moveStage, config: dryRunProject });
+      const agencyLog = executor.getLogByProject('agency-001');
+      const clientLog = executor.getLogByProject('client-001');
+      expect(agencyLog).toHaveLength(1);
+      expect(clientLog).toHaveLength(1);
+      expect(agencyLog[0]!.executed).toBe(true);
+      expect(clientLog[0]!.dryRun).toBe(true);
+    });
+
+    it('clearHistory clears telemetry log', async () => {
+      await executor.execute({ action: moveStage, config: liveProject });
+      expect(executor.getLog()).toHaveLength(1);
+      executor.clearHistory();
+      expect(executor.getLog()).toHaveLength(0);
+    });
+
+    it('records action-disabled reason in telemetry', async () => {
+      await executor.execute({ action: triggerWorkflow, config: restrictedProject });
+      const log = executor.getLog();
+      expect(log[0]!.blockedReason).toBe('action-disabled');
+      expect(log[0]!.actionType).toBe('trigger_workflow');
+    });
+  });
+
   describe('MockGHLAdapter', () => {
     it('getPipelines returns mock data', async () => {
       const pipelines = await adapter.getPipelines();

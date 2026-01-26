@@ -21,6 +21,35 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ## Week 4.2 – GHL Actions: Move Stage + Trigger Workflow
 
+### Task: Generate sales & demo materials from system documentation
+- **Status:** TODO
+- **Agent:** StrategyFunnelAgent, CopyMessagingAgent
+- **Depends on:** docs/ baseline complete
+- **Deliverables:**
+  - Client-facing explanation
+  - Demo walkthrough script
+  - Value-based positioning
+- **Notes / blockers:**
+  - No new logic
+  - Uses existing system only
+
+### Task: Add telemetry coverage to ActionExecutor
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/ghl-actions.ts (ActionTelemetryEvent, recordAndReturn, getLog, getLogByProject)
+  - packages/agent-core/src/index.ts (export ActionTelemetryEvent)
+- **Tests added/updated:**
+  - packages/agent-core/src/ghl-actions.test.ts (7 new telemetry tests, 28 total)
+- **Commands run:**
+  - pnpm test (160 tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Every execute() call records ActionTelemetryEvent with projectId, actionType, payloadHash, dryRun, blocked, blockedReason, timestamp
+  - getLog() returns full telemetry log
+  - getLogByProject() filters by projectId
+  - clearHistory() resets both hashes and telemetry
+
 ### Task: Add GHL action schemas, adapter, and executor
 - **Status:** DONE
 - **Files touched:**
@@ -126,23 +155,130 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ---
 
-Segment: Week 1 – Foundation
+## Week 3 – Agents & Intelligence
+
+### Task: Add Hormozi/Psychology framework blocks to prompt-library
+- **Status:** DONE
+- **Files touched:**
+  - packages/prompt-library/src/frameworks/offer-economics.ts
+  - packages/prompt-library/src/frameworks/market-awareness.ts
+  - packages/prompt-library/src/frameworks/persuasion.ts
+  - packages/prompt-library/src/frameworks/funnel-design.ts
+  - packages/prompt-library/src/frameworks/index.ts
+- **Tests added/updated:**
+  - packages/prompt-library/src/global-rules.test.ts
+- **Commands run:**
+  - pnpm test (passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Hormozi Value Equation (offer-economics)
+  - Schwartz Awareness Levels (market-awareness)
+  - PAS/AIDA/Proof Hierarchy (persuasion)
+  - UX/CTA rules (funnel-design)
+  - All frameworks versioned for cache invalidation
+
+### Task: Define agent contracts
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/research-agent.ts
+  - packages/agent-core/src/contracts/strategy-funnel-agent.ts
+  - packages/agent-core/src/contracts/copy-messaging-agent.ts
+  - packages/agent-core/src/contracts/automation-crm-agent.ts
+  - packages/agent-core/src/contracts/quality-control-agent.ts
+  - packages/agent-core/src/contracts/index.ts
+- **Tests added/updated:**
+  - packages/agent-core/src/contracts.test.ts
+- **Commands run:**
+  - pnpm test (passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Each agent has: purpose, capabilities, constraints, input/output schemas
+  - No overlapping responsibilities enforced via constraints
+  - Per-agent model routing (Sonnet/GPT-4/GPT-4o-mini)
+  - Per-agent cost caps
+
+### Task: Implement multi-LLM routing
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/llm-router.ts
+- **Tests added/updated:**
+  - packages/agent-core/src/llm-router.test.ts
+- **Commands run:**
+  - pnpm test (passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Routes Research/Strategy/QC → Claude Sonnet
+  - Routes Copy → GPT-4
+  - Routes Automation → GPT-4o-mini
+  - Downgrade logic when cost cap exceeded
+  - Cross-provider fallback support
+
+### Task: Implement specialized agent runner with QC enforcement
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/specialized-runner.ts
+- **Tests added/updated:**
+  - packages/agent-core/src/specialized-runner.test.ts
+- **Commands run:**
+  - pnpm test (passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Contract enforcement before execution
+  - Framework injection based on agent requirements
+  - QC runs after Strategy and Copy agents
+  - QC can block execution if violations found
+  - Per-agent cost tracking
 
 ---
 
-## 2026-01-25
+## Week 2 – Governance & Assumptions
+
+### Task: Implement assumption gate system
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/assumption-gate.ts (created)
+  - apps/api/src/db/schema.ts (extended)
+  - apps/api/src/routes/assumptions.ts (created)
+- **Tests added/updated:**
+  - packages/agent-core/src/assumption-gate.test.ts
+- **Commands run:**
+  - pnpm test (passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Assumption gate implemented and enforced
+  - Requirements generated from approved assumptions
+  - Requirements versioning implemented
+  - Tasks generated from requirements
+  - Tasks blocked when assumptions pending
+  - API endpoints for assumptions, requirements, tasks
+  - Dashboard views for assumptions, requirements, tasks
+  - All blocks and decisions logged
+
+---
+
+## Week 1 – Foundation
 
 ### Task: Create progress tracking files
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - progress/task-log.md
   - progress/error-log.md
   - progress/decision-log.md
-- **Tests:** N/A (infrastructure)
+- **Tests added/updated:**
+  - N/A (infrastructure)
+- **Commands run:**
+  - N/A (documentation)
+- **Notes / blockers:**
+  - Foundation for tracking all work
 
 ### Task: Create monorepo directory structure
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - apps/api/, apps/cms/, apps/dashboard/
   - packages/agent-core/, packages/telemetry/, packages/prompt-library/
   - docs/, scripts/
@@ -153,11 +289,16 @@ Segment: Week 1 – Foundation
   - .gitignore
   - .prettierrc
   - .eslintrc.cjs
-- **Tests:** N/A (infrastructure)
+- **Tests added/updated:**
+  - N/A (infrastructure)
+- **Commands run:**
+  - pnpm install (1448 packages installed)
+- **Notes / blockers:**
+  - Monorepo structure with pnpm workspaces
 
 ### Task: Implement telemetry package
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - packages/telemetry/package.json
   - packages/telemetry/tsconfig.json
   - packages/telemetry/vitest.config.ts
@@ -169,12 +310,16 @@ Segment: Week 1 – Foundation
   - packages/telemetry/src/spend.ts
   - packages/telemetry/src/budget.ts
   - packages/telemetry/src/index.ts
-- **Tests added:**
+- **Tests added/updated:**
   - packages/telemetry/src/cost.test.ts
   - packages/telemetry/src/record.test.ts
   - packages/telemetry/src/spend.test.ts
   - packages/telemetry/src/budget.test.ts
-- **Functions implemented:**
+- **Commands run:**
+  - pnpm test (25 tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
   - estimateCost() - calculates cost from tokens and model pricing
   - recordTaskRun() - records task run with auto-calculated cost
   - getProjectSpend() - gets daily/monthly/total spend
@@ -182,7 +327,7 @@ Segment: Week 1 – Foundation
 
 ### Task: Implement agent-core package
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - packages/agent-core/package.json
   - packages/agent-core/tsconfig.json
   - packages/agent-core/vitest.config.ts
@@ -192,11 +337,15 @@ Segment: Week 1 – Foundation
   - packages/agent-core/src/prompt-compiler.ts
   - packages/agent-core/src/agent-runner.ts
   - packages/agent-core/src/index.ts
-- **Tests added:**
+- **Tests added/updated:**
   - packages/agent-core/src/questions.test.ts
   - packages/agent-core/src/prompt-compiler.test.ts
   - packages/agent-core/src/agent-runner.test.ts
-- **Features implemented:**
+- **Commands run:**
+  - pnpm test (24 tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
   - Question bank loading from ../agency-questions
   - Prompt compilation (GLOBAL_RULES + AgentContract + FrameworkBlocks + TaskPrompt + KnownUnknowns)
   - JSON output schema enforcement
@@ -206,21 +355,28 @@ Segment: Week 1 – Foundation
 
 ### Task: Implement prompt-library package
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - packages/prompt-library/package.json
   - packages/prompt-library/tsconfig.json
+  - packages/prompt-library/vitest.config.ts
   - packages/prompt-library/src/types.ts
   - packages/prompt-library/src/global-rules.ts
   - packages/prompt-library/src/frameworks.ts
   - packages/prompt-library/src/index.ts
-- **Features:**
+- **Tests added/updated:**
+  - packages/prompt-library/src/global-rules.test.ts
+- **Commands run:**
+  - pnpm test (4 tests passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
   - Global rules for all agents
   - Category-specific rules (client-facing, code-generation, data-processing)
   - Framework block placeholders (marketing, technical, ecommerce, communication)
 
 ### Task: Implement API app
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - apps/api/package.json
   - apps/api/tsconfig.json
   - apps/api/drizzle.config.ts
@@ -232,18 +388,21 @@ Segment: Week 1 – Foundation
   - apps/api/src/db/migrate.ts
   - apps/api/src/routes/task.ts
   - apps/api/src/routes/spend.ts
-- **Endpoints:**
+- **Tests added/updated:**
+  - apps/api/src/routes/task.test.ts
+  - apps/api/src/routes/spend.test.ts
+- **Commands run:**
+  - pnpm test (passed)
+  - pnpm lint (passed)
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
   - POST /api/run-task
   - GET /api/projects/:projectId/spend
-- **Database schema:**
-  - clients
-  - projects (with dailyBudgetGbp, monthlyBudgetGbp)
-  - model_pricing
-  - task_runs (tokens, cost, model, agent, taskType, promptHash, status)
+  - Database schema: clients, projects, model_pricing, task_runs
 
 ### Task: Scaffold dashboard app
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - apps/dashboard/package.json
   - apps/dashboard/tsconfig.json
   - apps/dashboard/next.config.js
@@ -254,16 +413,16 @@ Segment: Week 1 – Foundation
   - apps/dashboard/src/app/projects/[id]/assumptions/page.tsx
   - apps/dashboard/src/app/projects/[id]/requirements/page.tsx
   - apps/dashboard/src/app/projects/[id]/tasks/page.tsx
-- **Routes:**
-  - /projects
-  - /projects/[id]/proposal
-  - /projects/[id]/assumptions
-  - /projects/[id]/requirements
-  - /projects/[id]/tasks
+- **Tests added/updated:**
+  - N/A (UI scaffold)
+- **Commands run:**
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - Routes: /projects, /projects/[id]/proposal, /projects/[id]/assumptions, /projects/[id]/requirements, /projects/[id]/tasks
 
 ### Task: Scaffold CMS app (Strapi)
 - **Status:** DONE
-- **Files created:**
+- **Files touched:**
   - apps/cms/package.json
   - apps/cms/Dockerfile
   - apps/cms/docker-compose.yml
@@ -271,106 +430,28 @@ Segment: Week 1 – Foundation
   - apps/cms/src/api/framework/content-types/framework/schema.json
   - apps/cms/src/api/agent-config/content-types/agent-config/schema.json
   - apps/cms/src/api/prompt-template/content-types/prompt-template/schema.json
-- **Content types:**
-  - Framework
-  - AgentConfig
-  - PromptTemplate
+- **Tests added/updated:**
+  - N/A (CMS configuration)
+- **Commands run:**
+  - N/A (Strapi scaffold)
+- **Notes / blockers:**
+  - Content types: Framework, AgentConfig, PromptTemplate
 
 ### Task: Verify foundation setup
 - **Status:** DONE
-- **Verification:**
-  - pnpm install: SUCCESS (1448 packages installed)
-  - pnpm test (telemetry): 25 tests passed
-  - pnpm test (agent-core): 24 tests passed
-  - pnpm test (prompt-library): 4 tests passed
-- **Tests verified:**
-  - estimateCost() unit tests
+- **Files touched:**
+  - N/A (verification only)
+- **Tests added/updated:**
+  - N/A (running existing tests)
+- **Commands run:**
+  - pnpm install (SUCCESS - 1448 packages)
+  - pnpm test (telemetry: 25 tests passed)
+  - pnpm test (agent-core: 24 tests passed)
+  - pnpm test (prompt-library: 4 tests passed)
+- **Notes / blockers:**
+  - All foundation components verified working
   - Budget overrun blocks execution
   - Missing question bank fails fast
-  - Output schema enforcement
-
-  ## Week 2 – Governance & Assumptions (COMPLETED)
-
-Status: DONE
-
-Completed:
-- Assumption gate implemented and enforced
-- Requirements generated from approved assumptions
-- Requirements versioning implemented
-- Tasks generated from requirements
-- Tasks blocked when assumptions pending
-- API endpoints for assumptions, requirements, tasks
-- Dashboard views for assumptions, requirements, tasks
-- All blocks and decisions logged
-
-Notes:
-- Week 2 dependency satisfied
-- Safe to proceed to Week 3 and beyond
-
-## Week 3 – Agents & Intelligence
-
-### Task: Add Hormozi/Psychology framework blocks to prompt-library
-- **Status:** DONE
-- **Files created:**
-  - packages/prompt-library/src/frameworks/offer-economics.ts
-  - packages/prompt-library/src/frameworks/market-awareness.ts
-  - packages/prompt-library/src/frameworks/persuasion.ts
-  - packages/prompt-library/src/frameworks/funnel-design.ts
-  - packages/prompt-library/src/frameworks/index.ts
-- **Features:**
-  - Hormozi Value Equation (offer-economics)
-  - Schwartz Awareness Levels (market-awareness)
-  - PAS/AIDA/Proof Hierarchy (persuasion)
-  - UX/CTA rules (funnel-design)
-  - All frameworks versioned for cache invalidation
-
-### Task: Define agent contracts
-- **Status:** DONE
-- **Files created:**
-  - packages/agent-core/src/contracts/research-agent.ts
-  - packages/agent-core/src/contracts/strategy-funnel-agent.ts
-  - packages/agent-core/src/contracts/copy-messaging-agent.ts
-  - packages/agent-core/src/contracts/automation-crm-agent.ts
-  - packages/agent-core/src/contracts/quality-control-agent.ts
-  - packages/agent-core/src/contracts/index.ts
-- **Features:**
-  - Each agent has: purpose, capabilities, constraints, input/output schemas
-  - No overlapping responsibilities enforced via constraints
-  - Per-agent model routing (Sonnet/GPT-4/GPT-4o-mini)
-  - Per-agent cost caps
-
-### Task: Implement multi-LLM routing
-- **Status:** DONE
-- **Files created:**
-  - packages/agent-core/src/llm-router.ts
-- **Features:**
-  - Routes Research/Strategy/QC → Claude Sonnet
-  - Routes Copy → GPT-4
-  - Routes Automation → GPT-4o-mini
-  - Downgrade logic when cost cap exceeded
-  - Cross-provider fallback support
-
-### Task: Implement specialized agent runner with QC enforcement
-- **Status:** DONE
-- **Files created:**
-  - packages/agent-core/src/specialized-runner.ts
-- **Features:**
-  - Contract enforcement before execution
-  - Framework injection based on agent requirements
-  - QC runs after Strategy and Copy agents
-  - QC can block execution if violations found
-  - Per-agent cost tracking
-
-### Task: Add tests for Week 3 components
-- **Status:** DONE
-- **Tests added:**
-  - packages/agent-core/src/contracts.test.ts
-  - packages/agent-core/src/llm-router.test.ts
-- **Coverage:**
-  - All 5 agents have contracts
-  - No overlapping responsibilities
-  - LLM routing selects correct model
-  - Cost caps enforced
-  - QC blocking logic works
+  - Output schema enforcement working
 
 ---

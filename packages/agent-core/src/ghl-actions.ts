@@ -76,6 +76,21 @@ export interface ActionExecutionResult {
 }
 
 /**
+ * Telemetry event for action execution
+ */
+export interface ActionTelemetryEvent {
+  projectId: string;
+  actionType: string;
+  payloadHash: string;
+  executed: boolean;
+  dryRun: boolean;
+  blocked: boolean;
+  blockedReason?: BlockedReason;
+  message: string;
+  timestamp: string;
+}
+
+/**
  * Generate a deterministic hash for idempotency checks
  */
 export function computePayloadHash(action: GHLAction): string {
@@ -142,6 +157,7 @@ function checkWorkflowAllowlist(
 export class ActionExecutor {
   private adapter: GHLAdapter;
   private executedHashes: Set<string> = new Set();
+  private telemetryLog: ActionTelemetryEvent[] = [];
 
   constructor(adapter: GHLAdapter) {
     this.adapter = adapter;
@@ -159,7 +175,7 @@ export class ActionExecutor {
 
     // 1. Check idempotency
     if (this.executedHashes.has(payloadHash)) {
-      return {
+      return this.recordAndReturn(config.projectId, {
         action,
         executed: false,
         dryRun: config.dryRun,
@@ -167,12 +183,12 @@ export class ActionExecutor {
         blockedReason: 'duplicate-execution',
         message: `Duplicate action blocked: ${payloadHash}`,
         payloadHash,
-      };
+      });
     }
 
     // 2. Check action-level enablement
     if (config.enabledActions.length > 0 && !config.enabledActions.includes(action.action)) {
-      return {
+      return this.recordAndReturn(config.projectId, {
         action,
         executed: false,
         dryRun: config.dryRun,
@@ -180,14 +196,14 @@ export class ActionExecutor {
         blockedReason: 'action-disabled',
         message: `Action '${action.action}' is not enabled for project '${config.projectId}'`,
         payloadHash,
-      };
+      });
     }
 
     // 3. Check allowlists
     if (action.action === 'move_stage') {
       const stageCheck = checkStageAllowlist(config, action.pipelineId, action.stageId);
       if (!stageCheck.allowed) {
-        return {
+        return this.recordAndReturn(config.projectId, {
           action,
           executed: false,
           dryRun: config.dryRun,
@@ -195,12 +211,12 @@ export class ActionExecutor {
           blockedReason: stageCheck.blockedReason,
           message: stageCheck.message!,
           payloadHash,
-        };
+        });
       }
     } else if (action.action === 'trigger_workflow') {
       const wfCheck = checkWorkflowAllowlist(config, action.workflowId);
       if (!wfCheck.allowed) {
-        return {
+        return this.recordAndReturn(config.projectId, {
           action,
           executed: false,
           dryRun: config.dryRun,
@@ -208,21 +224,21 @@ export class ActionExecutor {
           blockedReason: wfCheck.blockedReason,
           message: wfCheck.message!,
           payloadHash,
-        };
+        });
       }
     }
 
     // 4. Check dryRun
     if (config.dryRun) {
       this.executedHashes.add(payloadHash);
-      return {
+      return this.recordAndReturn(config.projectId, {
         action,
         executed: false,
         dryRun: true,
         blocked: false,
         message: `Dry run: ${action.action} logged but not executed`,
         payloadHash,
-      };
+      });
     }
 
     // 5. Execute the action
@@ -232,17 +248,16 @@ export class ActionExecutor {
       this.executedHashes.add(payloadHash);
     }
 
-    return {
+    return this.recordAndReturn(config.projectId, {
       action,
       executed: result.success,
       dryRun: false,
       blocked: !result.success,
-      blockedReason: result.success ? undefined : undefined,
       message: result.success
         ? `${action.action} executed successfully`
         : `${action.action} failed: ${result.error}`,
       payloadHash,
-    };
+    });
   }
 
   private async callAdapter(action: GHLAction): Promise<{ success: boolean; error?: string }> {
@@ -264,10 +279,43 @@ export class ActionExecutor {
   }
 
   /**
+   * Get the telemetry log of all action executions
+   */
+  getLog(): ReadonlyArray<ActionTelemetryEvent> {
+    return this.telemetryLog;
+  }
+
+  /**
+   * Get telemetry events filtered by project
+   */
+  getLogByProject(projectId: string): ActionTelemetryEvent[] {
+    return this.telemetryLog.filter((e) => e.projectId === projectId);
+  }
+
+  /**
    * Clear executed hashes (for testing)
    */
   clearHistory(): void {
     this.executedHashes.clear();
+    this.telemetryLog = [];
+  }
+
+  private recordAndReturn(
+    projectId: string,
+    result: ActionExecutionResult
+  ): ActionExecutionResult {
+    this.telemetryLog.push({
+      projectId,
+      actionType: result.action.action,
+      payloadHash: result.payloadHash,
+      executed: result.executed,
+      dryRun: result.dryRun,
+      blocked: result.blocked,
+      blockedReason: result.blockedReason,
+      message: result.message,
+      timestamp: new Date().toISOString(),
+    });
+    return result;
   }
 }
 

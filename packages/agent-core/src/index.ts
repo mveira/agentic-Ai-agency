@@ -78,4 +78,5 @@ export type {
   GHLAdapter,
   GHLPipeline,
   ActionExecutionResult,
+  ActionTelemetryEvent,
 } from './ghl-actions.js';
