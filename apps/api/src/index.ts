@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import { taskRouter } from './routes/task.js';
 import { spendRouter } from './routes/spend.js';
 import { projectConfigRouter } from './routes/project-config.js';
+import { buildRouter } from './routes/build.js';
 
 const app = new Hono();
 
@@ -24,6 +25,7 @@ app.get('/health', (c) => {
 app.route('/api/run-task', taskRouter);
 app.route('/api/projects', spendRouter);
 app.route('/api/projects', projectConfigRouter);
+app.route('/api/projects', buildRouter);
 
 // 404 handler
 app.notFound((c) => {

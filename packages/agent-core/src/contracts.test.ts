@@ -9,18 +9,21 @@ import {
   STRATEGY_FUNNEL_AGENT_CONTRACT,
   COPY_MESSAGING_AGENT_CONTRACT,
   AUTOMATION_CRM_AGENT_CONTRACT,
+  UX_DESIGN_AGENT_CONTRACT,
   QUALITY_CONTROL_AGENT_CONTRACT,
   ResearchAgentInputSchema,
+  UXDesignAgentInputSchema,
   shouldBlock,
 } from './contracts/index.js';
 
 describe('Agent Contracts', () => {
-  it('has all 5 required agents defined', () => {
-    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(5);
+  it('has all 6 required agents defined', () => {
+    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(6);
     expect(ALL_AGENT_CONTRACTS['research-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['strategy-funnel-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['copy-messaging-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['automation-crm-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['ux-design-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['quality-control-agent']).toBeDefined();
   });
 
@@ -41,6 +44,7 @@ describe('Agent Contracts', () => {
       STRATEGY_FUNNEL_AGENT_CONTRACT,
       COPY_MESSAGING_AGENT_CONTRACT,
       AUTOMATION_CRM_AGENT_CONTRACT,
+      UX_DESIGN_AGENT_CONTRACT,
       QUALITY_CONTROL_AGENT_CONTRACT,
     ];
 
@@ -96,9 +100,10 @@ describe('LLM Routing', () => {
     }
   });
 
-  it('routes Research/Strategy/QC to Claude Sonnet', () => {
+  it('routes Research/Strategy/UX/QC to Claude Sonnet', () => {
     expect(AGENT_MODEL_ROUTING['research-agent']).toBe('claude-3-sonnet');
     expect(AGENT_MODEL_ROUTING['strategy-funnel-agent']).toBe('claude-3-sonnet');
+    expect(AGENT_MODEL_ROUTING['ux-design-agent']).toBe('claude-3-sonnet');
     expect(AGENT_MODEL_ROUTING['quality-control-agent']).toBe('claude-3-sonnet');
   });
 
@@ -184,6 +189,81 @@ describe('Input Validation', () => {
 
     const result = ResearchAgentInputSchema.safeParse(invalidInput);
     expect(result.success).toBe(false);
+  });
+});
+
+describe('UX Design Agent', () => {
+  it('does NOT write copy', () => {
+    const constraints = UX_DESIGN_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('not');
+    expect(constraints).toContain('copy');
+  });
+
+  it('must consume blueprint', () => {
+    const constraints = UX_DESIGN_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('blueprint');
+  });
+
+  it('must not skip accessibility', () => {
+    const constraints = UX_DESIGN_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('accessibility');
+  });
+
+  it('has funnel-design framework requirement', () => {
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['ux-design-agent']).toContain('funnel-design');
+  });
+
+  it('has cost cap of 0.75', () => {
+    expect(AGENT_COST_CAPS['ux-design-agent']).toBe(0.75);
+  });
+
+  it('UXDesignAgentInputSchema validates correct input', () => {
+    const validInput = {
+      projectId: '550e8400-e29b-41d4-a716-446655440000',
+      blueprint: {
+        goal: 'Generate leads',
+        audience: 'SaaS founders',
+        funnelSteps: [
+          {
+            stepId: 'step-1',
+            name: 'Landing',
+            funnelPosition: 'tofu',
+            awarenessLevel: 'problem-aware',
+            goal: 'Capture leads',
+            contentType: 'landing-page',
+            cta: 'Sign up',
+          },
+        ],
+        sectionsNeeded: { '/landing': ['hero', 'cta'] },
+      },
+    };
+    expect(UXDesignAgentInputSchema.safeParse(validInput).success).toBe(true);
+  });
+
+  it('UXDesignAgentInputSchema rejects invalid projectId', () => {
+    const invalidInput = {
+      projectId: 'not-a-uuid',
+      blueprint: {
+        goal: 'Generate leads',
+        audience: 'SaaS founders',
+        funnelSteps: [],
+        sectionsNeeded: {},
+      },
+    };
+    expect(UXDesignAgentInputSchema.safeParse(invalidInput).success).toBe(false);
+  });
+
+  it('UXDesignAgentInputSchema rejects missing blueprint', () => {
+    const invalidInput = {
+      projectId: '550e8400-e29b-41d4-a716-446655440000',
+    };
+    expect(UXDesignAgentInputSchema.safeParse(invalidInput).success).toBe(false);
+  });
+
+  it('getAgentContract returns UX contract', () => {
+    const contract = getAgentContract('ux-design-agent');
+    expect(contract).toBe(UX_DESIGN_AGENT_CONTRACT);
+    expect(contract?.agentId).toBe('ux-design-agent');
   });
 });
 

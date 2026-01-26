@@ -80,3 +80,60 @@ export type {
   ActionExecutionResult,
   ActionTelemetryEvent,
 } from './ghl-actions.js';
+
+// Build Schemas (Week 5)
+export {
+  FunnelStepSchema,
+  ScreenSchema,
+  ComponentSchema,
+  LayoutBlockSchema,
+  AccessibilityRuleSchema,
+  ScreenStateSchema,
+  ScreenCopySchema,
+  MarketingBlueprintSchema,
+  UXUISpecSchema,
+  CopyPackSchema,
+  BuildTaskSchema,
+  BuildPlanSchema,
+  QCReportSchema,
+} from './build-schemas.js';
+export type {
+  FunnelStep,
+  Screen,
+  Component,
+  LayoutBlock,
+  AccessibilityRule,
+  ScreenState,
+  ScreenCopy,
+  MarketingBlueprint,
+  UXUISpec,
+  CopyPack,
+  BuildTask,
+  BuildPlan,
+  QCReport,
+} from './build-schemas.js';
+
+// Build Orchestrator (Week 5)
+export {
+  BuildOrchestrator,
+  InMemoryRequirementsProvider,
+  BuildRequestSchema,
+  assembleBuildPlan,
+} from './build-orchestrator.js';
+export type {
+  BuildRequest,
+  BuildOrchestratorInput,
+  BuildOrchestratorResult,
+  RequirementsProvider,
+  TelemetryEntry,
+} from './build-orchestrator.js';
+
+// Build Mocks (Week 5)
+export {
+  createMockBlueprintOutput,
+  createMockUXUISpecOutput,
+  createMockCopyPackOutput,
+  createMockQCPassOutput,
+  createMockQCBlockOutput,
+  registerBuildMocks,
+} from './build-mocks.js';

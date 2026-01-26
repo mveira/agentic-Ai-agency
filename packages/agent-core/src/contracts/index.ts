@@ -66,6 +66,20 @@ export type {
   AutomationCRMAgentOutput,
 } from './automation-crm-agent.js';
 
+// UX Design Agent
+export {
+  UX_DESIGN_AGENT_CONTRACT,
+  UXDesignAgentInputSchema,
+  UXDesignAgentOutputSchema,
+  UX_DESIGN_AGENT_FRAMEWORKS,
+  UX_DESIGN_AGENT_MODEL,
+  UX_DESIGN_AGENT_COST_CAP,
+} from './ux-design-agent.js';
+export type {
+  UXDesignAgentInput,
+  UXDesignAgentOutput,
+} from './ux-design-agent.js';
+
 // Quality Control Agent
 export {
   QUALITY_CONTROL_AGENT_CONTRACT,
@@ -88,6 +102,7 @@ import { RESEARCH_AGENT_CONTRACT } from './research-agent.js';
 import { STRATEGY_FUNNEL_AGENT_CONTRACT } from './strategy-funnel-agent.js';
 import { COPY_MESSAGING_AGENT_CONTRACT } from './copy-messaging-agent.js';
 import { AUTOMATION_CRM_AGENT_CONTRACT } from './automation-crm-agent.js';
+import { UX_DESIGN_AGENT_CONTRACT } from './ux-design-agent.js';
 import { QUALITY_CONTROL_AGENT_CONTRACT } from './quality-control-agent.js';
 
 /**
@@ -98,6 +113,7 @@ export const ALL_AGENT_CONTRACTS: Record<string, AgentContract> = {
   'strategy-funnel-agent': STRATEGY_FUNNEL_AGENT_CONTRACT,
   'copy-messaging-agent': COPY_MESSAGING_AGENT_CONTRACT,
   'automation-crm-agent': AUTOMATION_CRM_AGENT_CONTRACT,
+  'ux-design-agent': UX_DESIGN_AGENT_CONTRACT,
   'quality-control-agent': QUALITY_CONTROL_AGENT_CONTRACT,
 };
 
@@ -116,6 +132,7 @@ export const AGENT_MODEL_ROUTING: Record<string, string> = {
   'strategy-funnel-agent': 'claude-3-sonnet',
   'copy-messaging-agent': 'gpt-4',
   'automation-crm-agent': 'gpt-4o-mini',
+  'ux-design-agent': 'claude-3-sonnet',
   'quality-control-agent': 'claude-3-sonnet',
 };
 
@@ -127,6 +144,7 @@ export const AGENT_COST_CAPS: Record<string, number> = {
   'strategy-funnel-agent': 0.75,
   'copy-messaging-agent': 1.00,
   'automation-crm-agent': 0.25,
+  'ux-design-agent': 0.75,
   'quality-control-agent': 0.50,
 };
 
@@ -138,5 +156,6 @@ export const AGENT_FRAMEWORK_REQUIREMENTS: Record<string, string[]> = {
   'strategy-funnel-agent': ['offer-economics', 'market-awareness', 'funnel-design'],
   'copy-messaging-agent': ['persuasion', 'market-awareness'],
   'automation-crm-agent': ['funnel-design'],
+  'ux-design-agent': ['funnel-design'],
   'quality-control-agent': ['offer-economics', 'market-awareness', 'persuasion', 'funnel-design'],
 };
