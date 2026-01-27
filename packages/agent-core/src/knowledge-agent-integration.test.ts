@@ -31,8 +31,8 @@ describe('Agent–KB Integration', () => {
   });
 
   describe('AGENT_KB_TOOL_ACCESS mapping', () => {
-    it('all 8 agents are mapped', () => {
-      expect(Object.keys(AGENT_KB_TOOL_ACCESS)).toHaveLength(8);
+    it('all 9 agents are mapped', () => {
+      expect(Object.keys(AGENT_KB_TOOL_ACCESS)).toHaveLength(9);
     });
 
     it('research-agent has no KB access (empty array)', () => {
@@ -74,6 +74,13 @@ describe('Agent–KB Integration', () => {
 
     it('quality-control-agent has access to all 5 approved tools', () => {
       expect(AGENT_KB_TOOL_ACCESS['quality-control-agent']).toHaveLength(5);
+    });
+
+    it('proposal-strategist-agent has approved requirements and assumptions', () => {
+      expect(AGENT_KB_TOOL_ACCESS['proposal-strategist-agent']).toEqual([
+        'getApprovedRequirements',
+        'getApprovedAssumptions',
+      ]);
     });
   });
 
@@ -157,6 +164,16 @@ describe('Agent–KB Integration', () => {
 
       const result = loadKBForAgent(store, 'ux-design-agent', PROJECT_ID);
       expect(result.data['getDesignRules']!.count).toBe(0);
+    });
+
+    it('proposal-strategist-agent loads approved requirements and assumptions', () => {
+      store.store(createEntry({ type: 'requirement', status: 'approved' }));
+      store.store(createEntry({ type: 'assumption', status: 'approved' }));
+
+      const result = loadKBForAgent(store, 'proposal-strategist-agent', PROJECT_ID);
+      expect(result.success).toBe(true);
+      expect(result.data['getApprovedRequirements']!.count).toBe(1);
+      expect(result.data['getApprovedAssumptions']!.count).toBe(1);
     });
 
     it('strategy-funnel-agent loads design rules and decisions', () => {

@@ -256,3 +256,61 @@ export type { LogToolUsageParams } from './knowledge-tool-telemetry.js';
 // Knowledge Agent Integration (Step 4.5)
 export { AGENT_KB_TOOL_ACCESS, loadKBForAgent } from './knowledge-agent-integration.js';
 export type { KBLoadResult } from './knowledge-agent-integration.js';
+
+// Proposal Schemas (Step 5)
+export {
+  ProposalStatusSchema,
+  ProposalScopeItemSchema,
+  ProposalAddOnSchema,
+  ComplianceFlagsSchema,
+  ProposalJsonSchema,
+  ProposalUiSpecJsonSchema,
+  ProposalReviewStatusSchema,
+  ProposalReviewSchema,
+  ProposalActionTypeSchema,
+  StrapiPricingPackageSchema,
+  StrapiProposalTemplateSchema,
+  StrapiPersuasionFrameworkSchema,
+  StrapiHormoziFrameworkSchema,
+  StrapiTimelineRuleSchema,
+  ProposalCRMSentActionSchema,
+  ProposalCRMApprovedActionSchema,
+} from './proposal-schemas.js';
+export type {
+  ProposalStatus,
+  ProposalScopeItem,
+  ProposalAddOn,
+  ComplianceFlags,
+  ProposalJson,
+  ProposalUiSpecJson,
+  ProposalReviewStatus,
+  ProposalReviewInput,
+  ProposalActionType,
+  StrapiPricingPackage,
+  StrapiProposalTemplate,
+  StrapiPersuasionFramework,
+  StrapiHormoziFramework,
+  StrapiTimelineRule,
+  ProposalStrapiProvider,
+  ProposalCRMSentAction,
+  ProposalCRMApprovedAction,
+} from './proposal-schemas.js';
+
+// Proposal Orchestrator (Step 5)
+export {
+  ProposalOrchestrator,
+  InMemoryProposalStrapiProvider,
+  InMemoryProposalStore,
+  generatePublicId,
+  buildProposalSentCRMAction,
+  buildProposalApprovedCRMAction,
+} from './proposal-orchestrator.js';
+export type {
+  ProposalOrchestratorInput,
+  ProposalOrchestratorResult,
+  ProposalTelemetryEntry,
+  StoredProposal,
+  StoredProposalReview,
+  StoredProposalAction,
+  ProposalStore,
+} from './proposal-orchestrator.js';

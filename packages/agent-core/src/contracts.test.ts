@@ -13,16 +13,18 @@ import {
   QUALITY_CONTROL_AGENT_CONTRACT,
   BUSINESS_ARCHITECT_AGENT_CONTRACT,
   REQUIREMENTS_ENGINEER_AGENT_CONTRACT,
+  PROPOSAL_STRATEGIST_AGENT_CONTRACT,
   ResearchAgentInputSchema,
   UXDesignAgentInputSchema,
   BusinessArchitectAgentInputSchema,
   RequirementsEngineerAgentInputSchema,
+  ProposalStrategistAgentInputSchema,
   shouldBlock,
 } from './contracts/index.js';
 
 describe('Agent Contracts', () => {
-  it('has all 8 required agents defined', () => {
-    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(8);
+  it('has all 9 required agents defined', () => {
+    expect(Object.keys(ALL_AGENT_CONTRACTS)).toHaveLength(9);
     expect(ALL_AGENT_CONTRACTS['research-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['strategy-funnel-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['copy-messaging-agent']).toBeDefined();
@@ -31,6 +33,7 @@ describe('Agent Contracts', () => {
     expect(ALL_AGENT_CONTRACTS['quality-control-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['business-architect-agent']).toBeDefined();
     expect(ALL_AGENT_CONTRACTS['requirements-engineer-agent']).toBeDefined();
+    expect(ALL_AGENT_CONTRACTS['proposal-strategist-agent']).toBeDefined();
   });
 
   it('getAgentContract returns correct contract', () => {
@@ -54,6 +57,7 @@ describe('Agent Contracts', () => {
       QUALITY_CONTROL_AGENT_CONTRACT,
       BUSINESS_ARCHITECT_AGENT_CONTRACT,
       REQUIREMENTS_ENGINEER_AGENT_CONTRACT,
+      PROPOSAL_STRATEGIST_AGENT_CONTRACT,
     ];
 
     it.each(contracts)('$agentId has required fields', (contract) => {
@@ -384,6 +388,90 @@ describe('Requirements Engineer Agent', () => {
     const contract = getAgentContract('requirements-engineer-agent');
     expect(contract).toBe(REQUIREMENTS_ENGINEER_AGENT_CONTRACT);
     expect(contract?.agentId).toBe('requirements-engineer-agent');
+  });
+});
+
+describe('Proposal Strategist Agent', () => {
+  it('MUST NOT add scope (constraint)', () => {
+    const constraints = PROPOSAL_STRATEGIST_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('must not');
+    expect(constraints).toContain('scope');
+  });
+
+  it('MUST NOT invent proof (constraint)', () => {
+    const constraints = PROPOSAL_STRATEGIST_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('must not');
+    expect(constraints).toContain('proof');
+  });
+
+  it('MUST NOT alter pricing (constraint)', () => {
+    const constraints = PROPOSAL_STRATEGIST_AGENT_CONTRACT.constraints.join(' ').toLowerCase();
+    expect(constraints).toContain('must not');
+    expect(constraints).toContain('pricing');
+  });
+
+  it('has offer-economics, market-awareness, and persuasion frameworks', () => {
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['proposal-strategist-agent']).toContain('offer-economics');
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['proposal-strategist-agent']).toContain('market-awareness');
+    expect(AGENT_FRAMEWORK_REQUIREMENTS['proposal-strategist-agent']).toContain('persuasion');
+  });
+
+  it('has cost cap of 0.75', () => {
+    expect(AGENT_COST_CAPS['proposal-strategist-agent']).toBe(0.75);
+  });
+
+  it('routes to claude-3-sonnet', () => {
+    expect(AGENT_MODEL_ROUTING['proposal-strategist-agent']).toBe('claude-3-sonnet');
+  });
+
+  it('ProposalStrategistAgentInputSchema validates correct input', () => {
+    const validInput = {
+      projectId: '550e8400-e29b-41d4-a716-446655440000',
+      requirementsVersionId: '550e8400-e29b-41d4-a716-446655440001',
+      approvedRequirements: [
+        { id: 'req-1', contentJson: { title: 'Landing page' }, createdAt: '2026-01-27T00:00:00Z' },
+      ],
+      approvedAssumptions: [],
+      strapiContent: {
+        pricingPackages: [
+          { id: 'pkg-1', name: 'Starter', tier: 'starter', price: '2500', currency: 'GBP', features: ['Landing page'] },
+        ],
+        proposalTemplates: [
+          { id: 'tpl-1', name: 'Default', sectionOrder: ['hero'], defaults: {} },
+        ],
+        persuasionFrameworks: [
+          { id: 'fw-1', name: 'Ethical', principles: ['Transparency'], ethicalOnly: true },
+        ],
+        hormoziFramework: { id: 'hz-1', name: 'Value Equation', offerFramingRules: ['Rule 1'] },
+        timelineRules: [
+          { id: 'tr-1', scopeType: 'landing-page', estimatedWeeks: 2 },
+        ],
+      },
+    };
+    expect(ProposalStrategistAgentInputSchema.safeParse(validInput).success).toBe(true);
+  });
+
+  it('ProposalStrategistAgentInputSchema rejects invalid projectId', () => {
+    const invalid = {
+      projectId: 'not-a-uuid',
+      requirementsVersionId: '550e8400-e29b-41d4-a716-446655440001',
+      approvedRequirements: [],
+      approvedAssumptions: [],
+      strapiContent: {
+        pricingPackages: [],
+        proposalTemplates: [],
+        persuasionFrameworks: [],
+        hormoziFramework: { id: 'hz-1', name: 'V', offerFramingRules: [] },
+        timelineRules: [],
+      },
+    };
+    expect(ProposalStrategistAgentInputSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it('getAgentContract returns Proposal Strategist contract', () => {
+    const contract = getAgentContract('proposal-strategist-agent');
+    expect(contract).toBe(PROPOSAL_STRATEGIST_AGENT_CONTRACT);
+    expect(contract?.agentId).toBe('proposal-strategist-agent');
   });
 });
 

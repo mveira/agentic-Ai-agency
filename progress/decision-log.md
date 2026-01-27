@@ -525,3 +525,75 @@ Use this format for all architectural and technical decisions:
 - **Status:** Approved
 
 ---
+
+## Step 5 – Proposal System
+
+### Decision: Reintroduce ProposalStrategistAgent in Step 5
+- **Date:** 2026-01-27
+- **Context:** Step 4.5 REDO removed ProposalStrategistAgent. Step 5 spec requires it for proposal generation.
+- **Decision:** Add ProposalStrategistAgent as the 9th agent with strict scope-locking constraints
+- **Reason:** Spec mandates a dedicated agent to assemble scope-locked proposals from approved requirements with Strapi content
+- **Alternatives considered:**
+  - Reuse BusinessArchitectAgent for proposals (rejected — different responsibility, would violate non-overlapping agent rule)
+  - Generate proposals without an agent (rejected — need LLM-driven pricing recommendation and persuasion)
+- **Impact:**
+  - Agent count: 8 → 9
+  - New contract with 7 capabilities and 7 constraints
+  - KB access: getApprovedRequirements, getApprovedAssumptions
+- **Status:** Approved
+
+### Decision: 3-step proposal pipeline (Strategist → UX → QC)
+- **Date:** 2026-01-27
+- **Context:** Proposals need content generation, conversion-focused UI, and validation
+- **Decision:** ProposalOrchestrator runs 3-step pipeline using SpecializedAgentRunner
+- **Reason:** Mirrors BuildOrchestrator pattern; separation of concerns (content vs. layout vs. validation); QC as final gate
+- **Alternatives considered:**
+  - Single agent generates both content and UI spec (rejected — violates non-overlapping agent rule)
+  - QC runs in parallel with UX (rejected — QC needs the complete proposal including UI spec)
+- **Impact:**
+  - Schema validation at each handoff (ProposalJsonSchema, ProposalUiSpecJsonSchema)
+  - QC can BLOCK proposals with compliance violations
+  - Telemetry recorded per step
+- **Status:** Approved
+
+### Decision: CRM emit-only pattern for proposal lifecycle
+- **Date:** 2026-01-27
+- **Context:** Spec requires CRM actions on SENT and APPROVED but forbids direct GHL calls
+- **Decision:** Build CRM action contracts (ProposalCRMSentAction, ProposalCRMApprovedAction) and return them from API endpoints; do not execute
+- **Reason:** Follows existing GHL action pattern (emit contracts, never execute directly); enables downstream event processing
+- **Alternatives considered:**
+  - Direct GHL API calls from routes (rejected — violates spec "No direct GHL calls" rule)
+  - Event bus integration (deferred — emit contracts now, wire to event bus later)
+- **Impact:**
+  - SENT emits move_stage 'Proposal sent' + tags
+  - APPROVED emits move_stage 'Won' + trigger_workflow
+  - No runtime GHL dependency
+- **Status:** Approved
+
+### Decision: Compliance flags as z.literal(true)
+- **Date:** 2026-01-27
+- **Context:** Proposals must guarantee scopeLocked, noInventedProof, noOutcomePromises
+- **Decision:** Use z.literal(true) for all three compliance flags in ProposalJsonSchema
+- **Reason:** Schema-level enforcement — a proposal cannot exist without all three flags being true. This is stronger than z.boolean() which would allow false.
+- **Alternatives considered:**
+  - z.boolean() with runtime validation (rejected — weaker guarantee, allows invalid states)
+  - Separate compliance check step (rejected — unnecessary when schema can enforce it)
+- **Impact:**
+  - Any proposal with false compliance flags fails schema validation
+  - Agent output is guaranteed compliant if it parses
+- **Status:** Approved
+
+### Decision: Human review required before proposal can be SENT
+- **Date:** 2026-01-27
+- **Context:** Spec mandates human review gate before proposals reach clients
+- **Decision:** mark-sent endpoint checks latest review status === APPROVED; returns 400 otherwise
+- **Reason:** Governance requirement — automated proposals must be human-reviewed before client delivery
+- **Alternatives considered:**
+  - Auto-send after QC passes (rejected — violates spec "Human review REQUIRED before proposal can be sent")
+  - Require multiple reviewers (deferred — single reviewer sufficient for MVP)
+- **Impact:**
+  - Lifecycle: DRAFT → IN_REVIEW → (review approve) → mark-sent → SENT
+  - Cannot skip review step
+- **Status:** Approved
+
+---

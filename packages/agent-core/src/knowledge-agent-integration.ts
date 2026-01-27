@@ -26,6 +26,10 @@ export const AGENT_KB_TOOL_ACCESS: Record<string, string[]> = {
     'getDesignRules',
     'getReviews',
   ],
+  'proposal-strategist-agent': [
+    'getApprovedRequirements',
+    'getApprovedAssumptions',
+  ],
 };
 
 // ─── Load Result ─────────────────────────────────────────────────────────────

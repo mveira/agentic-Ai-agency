@@ -1356,3 +1356,101 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - InMemoryKnowledgeStore kept for tests
 
 ---
+
+## Step 5 – Proposal System (Strategist + UX Conversion + Review Gate)
+
+### Task: Add proposal DB tables to drizzle schema
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/db/schema.ts (MODIFIED — added proposalStatusEnum, proposalReviewStatusEnum, proposalActionTypeEnum, proposalVersions, proposalReviews, proposalActions tables + type exports)
+- **Tests added/updated:**
+  - N/A (schema definition — tested via typecheck)
+- **Commands run:**
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - 3 new tables, 3 new enums, 6 inferred type exports
+  - Follows existing drizzle patterns (pgTable, pgEnum, uuid pk with defaultRandom)
+
+### Task: Create proposal domain schemas (Zod)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/proposal-schemas.ts (CREATED)
+- **Tests added/updated:**
+  - packages/agent-core/src/proposal-schemas.test.ts (10 tests)
+- **Commands run:**
+  - pnpm test — agent-core 436 tests pass
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - ProposalJsonSchema with z.literal(true) compliance flags (scopeLocked, noInventedProof, noOutcomePromises)
+  - ProposalUiSpecJsonSchema with ctaRequiresLogin: z.literal(true)
+  - Strapi content schemas (pricing, templates, frameworks, timeline)
+  - CRM action schemas (sent, approved)
+
+### Task: Create ProposalStrategistAgent contract
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/proposal-strategist-agent.ts (CREATED)
+  - packages/agent-core/src/contracts/index.ts (MODIFIED — added to ALL_AGENT_CONTRACTS, AGENT_MODEL_ROUTING, AGENT_COST_CAPS, AGENT_FRAMEWORK_REQUIREMENTS)
+  - packages/agent-core/src/knowledge-agent-integration.ts (MODIFIED — added proposal-strategist to KB access)
+  - packages/agent-core/src/knowledge-agent-integration.test.ts (MODIFIED — 9 agents, added proposal-strategist tests)
+  - packages/agent-core/src/contracts.test.ts (MODIFIED — 9 agents, 10 new proposal-strategist tests)
+- **Tests added/updated:**
+  - packages/agent-core/src/contracts.test.ts (69 total, 10 new)
+  - packages/agent-core/src/knowledge-agent-integration.test.ts (22 total, 2 new)
+- **Commands run:**
+  - pnpm test — agent-core 436 tests pass
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - 7 capabilities, 7 constraints (no scope changes, no pricing alteration, no invented proof)
+  - KB access: getApprovedRequirements, getApprovedAssumptions
+  - Model: claude-3-sonnet, cost cap: 0.75 GBP
+
+### Task: Create proposal orchestrator
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/proposal-orchestrator.ts (CREATED)
+  - packages/agent-core/src/proposal-mocks.ts (CREATED)
+- **Tests added/updated:**
+  - packages/agent-core/src/proposal-orchestrator.test.ts (17 tests)
+- **Commands run:**
+  - pnpm test — agent-core 436 tests pass
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - 3-step pipeline: ProposalStrategistAgent → UXDesignAgent (conversion) → QualityControlAgent
+  - Governance gates (requirements exist, assumptions approved)
+  - Strapi content loading with block-on-unavailable
+  - Schema validation at each handoff
+  - InMemoryProposalStore + InMemoryProposalStrapiProvider for tests
+  - generatePublicId(), CRM action builders
+
+### Task: Create proposal API routes
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/proposals.ts (CREATED — 8 endpoints + public router)
+  - apps/api/src/index.ts (MODIFIED — wired proposalRouter + publicProposalRouter)
+- **Tests added/updated:**
+  - apps/api/src/routes/proposals.test.ts (13 tests)
+- **Commands run:**
+  - pnpm test — 627 total tests pass (436 agent-core + 91 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm typecheck — clean
+  - pnpm lint — clean (0 errors, 0 warnings after fixes)
+- **Notes / blockers:**
+  - Full lifecycle: generate → list → get → request-review → approve/request-changes → mark-sent → client approve
+  - Public read-only endpoint: GET /api/p/:publicId (records VIEWED action)
+  - CRM action contracts emitted (not executed) on SENT and APPROVED
+  - Human review required before SENT
+  - Client authentication required for approval
+
+### Task: Update barrel exports
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/index.ts (MODIFIED — proposal schemas + orchestrator exports)
+- **Tests added/updated:**
+  - N/A (export wiring)
+- **Commands run:**
+  - pnpm typecheck — clean
+  - pnpm build — clean (agent-core dist rebuilt)
+- **Notes / blockers:**
+  - 16 value exports, 17 type exports for proposal system
+
+---

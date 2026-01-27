@@ -231,6 +231,81 @@ export const events = pgTable(
   })
 );
 
+/**
+ * Proposal version status enum.
+ */
+export const proposalStatusEnum = pgEnum('proposal_status', [
+  'DRAFT',
+  'IN_REVIEW',
+  'SENT',
+  'APPROVED',
+  'EXPIRED',
+]);
+
+/**
+ * Proposal review status enum.
+ */
+export const proposalReviewStatusEnum = pgEnum('proposal_review_status', [
+  'APPROVED',
+  'CHANGES_REQUESTED',
+]);
+
+/**
+ * Proposal action type enum.
+ */
+export const proposalActionTypeEnum = pgEnum('proposal_action_type', [
+  'SENT',
+  'VIEWED',
+  'APPROVED',
+]);
+
+/**
+ * Proposal versions table — generated proposals for client projects.
+ */
+export const proposalVersions = pgTable('proposal_versions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  projectId: uuid('project_id')
+    .references(() => projects.id)
+    .notNull(),
+  requirementsVersionId: uuid('requirements_version_id').notNull(),
+  versionNumber: integer('version_number').notNull(),
+  status: proposalStatusEnum('status').notNull().default('DRAFT'),
+  publicId: varchar('public_id', { length: 64 }).unique().notNull(),
+  expiresAt: timestamp('expires_at'),
+  proposalJson: jsonb('proposal_json').notNull(),
+  proposalUiSpecJson: jsonb('proposal_ui_spec_json').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Proposal reviews table — human review records for proposals.
+ */
+export const proposalReviews = pgTable('proposal_reviews', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  proposalVersionId: uuid('proposal_version_id')
+    .references(() => proposalVersions.id)
+    .notNull(),
+  status: proposalReviewStatusEnum('status').notNull(),
+  notes: text('notes'),
+  reviewerUserId: uuid('reviewer_user_id')
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Proposal actions table — tracks proposal lifecycle events.
+ */
+export const proposalActions = pgTable('proposal_actions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  proposalVersionId: uuid('proposal_version_id')
+    .references(() => proposalVersions.id)
+    .notNull(),
+  action: proposalActionTypeEnum('action').notNull(),
+  metaJson: jsonb('meta_json'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Type exports for use in application code
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
@@ -244,3 +319,9 @@ export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type KnowledgeEntryRow = typeof knowledgeEntries.$inferSelect;
 export type NewKnowledgeEntryRow = typeof knowledgeEntries.$inferInsert;
+export type ProposalVersion = typeof proposalVersions.$inferSelect;
+export type NewProposalVersion = typeof proposalVersions.$inferInsert;
+export type ProposalReview = typeof proposalReviews.$inferSelect;
+export type NewProposalReview = typeof proposalReviews.$inferInsert;
+export type ProposalAction = typeof proposalActions.$inferSelect;
+export type NewProposalAction = typeof proposalActions.$inferInsert;

@@ -138,6 +138,20 @@ export type {
   RequirementsEngineerAgentOutput,
 } from './requirements-engineer-agent.js';
 
+// Proposal Strategist Agent
+export {
+  PROPOSAL_STRATEGIST_AGENT_CONTRACT,
+  ProposalStrategistAgentInputSchema,
+  ProposalStrategistAgentOutputSchema,
+  PROPOSAL_STRATEGIST_AGENT_FRAMEWORKS,
+  PROPOSAL_STRATEGIST_AGENT_MODEL,
+  PROPOSAL_STRATEGIST_AGENT_COST_CAP,
+} from './proposal-strategist-agent.js';
+export type {
+  ProposalStrategistAgentInput,
+  ProposalStrategistAgentOutput,
+} from './proposal-strategist-agent.js';
+
 import type { AgentContract } from '../types.js';
 import { RESEARCH_AGENT_CONTRACT } from './research-agent.js';
 import { STRATEGY_FUNNEL_AGENT_CONTRACT } from './strategy-funnel-agent.js';
@@ -147,6 +161,7 @@ import { UX_DESIGN_AGENT_CONTRACT } from './ux-design-agent.js';
 import { QUALITY_CONTROL_AGENT_CONTRACT } from './quality-control-agent.js';
 import { BUSINESS_ARCHITECT_AGENT_CONTRACT } from './business-architect-agent.js';
 import { REQUIREMENTS_ENGINEER_AGENT_CONTRACT } from './requirements-engineer-agent.js';
+import { PROPOSAL_STRATEGIST_AGENT_CONTRACT } from './proposal-strategist-agent.js';
 
 /**
  * All agent contracts by ID
@@ -160,6 +175,7 @@ export const ALL_AGENT_CONTRACTS: Record<string, AgentContract> = {
   'quality-control-agent': QUALITY_CONTROL_AGENT_CONTRACT,
   'business-architect-agent': BUSINESS_ARCHITECT_AGENT_CONTRACT,
   'requirements-engineer-agent': REQUIREMENTS_ENGINEER_AGENT_CONTRACT,
+  'proposal-strategist-agent': PROPOSAL_STRATEGIST_AGENT_CONTRACT,
 };
 
 /**
@@ -181,6 +197,7 @@ export const AGENT_MODEL_ROUTING: Record<string, string> = {
   'quality-control-agent': 'claude-3-sonnet',
   'business-architect-agent': 'claude-3-sonnet',
   'requirements-engineer-agent': 'claude-3-sonnet',
+  'proposal-strategist-agent': 'claude-3-sonnet',
 };
 
 /**
@@ -195,6 +212,7 @@ export const AGENT_COST_CAPS: Record<string, number> = {
   'quality-control-agent': 0.50,
   'business-architect-agent': 0.50,
   'requirements-engineer-agent': 0.75,
+  'proposal-strategist-agent': 0.75,
 };
 
 /**
@@ -209,4 +227,5 @@ export const AGENT_FRAMEWORK_REQUIREMENTS: Record<string, string[]> = {
   'quality-control-agent': ['offer-economics', 'market-awareness', 'persuasion', 'funnel-design'],
   'business-architect-agent': ['market-awareness', 'offer-economics'],
   'requirements-engineer-agent': ['market-awareness', 'offer-economics'],
+  'proposal-strategist-agent': ['offer-economics', 'market-awareness', 'persuasion'],
 };
