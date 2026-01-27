@@ -913,6 +913,194 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ---
 
+## Step 4.5 – Knowledge Base + MCP Tooling + Documentation Hardening (SUPERSEDED)
+
+> All tasks below have been SUPERSEDED by the Step 4.5 REDO section below.
+
+### Task: Knowledge Entry Schema (Step 1)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/knowledge-schemas.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/knowledge-schemas.test.ts (8 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (8 pass)
+- **Notes / blockers:**
+  - KnowledgeEntryTypeSchema: requirement, assumption, decision, design-rule, review
+  - KnowledgeEntrySourceSchema: agent, human
+  - KnowledgeEntryStatusSchema: approved, rejected, superseded
+  - KnowledgeEntrySchema: id (uuid), projectId (uuid), type, source, versionRef (nullable), contentJson, status, createdAt
+
+### Task: KnowledgeStore Interface + InMemory Implementation (Step 2)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/knowledge-store.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/knowledge-store.test.ts (12 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (12 pass)
+- **Notes / blockers:**
+  - KnowledgeStore interface: store, get, getByProject, getByProjectAndType, getByProjectTypeAndStatus, supersede, clear
+  - InMemoryKnowledgeStore with Map<string, KnowledgeEntry> + structuredClone
+
+### Task: KB Auto-Populate Function (Step 3)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/knowledge-populator.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/knowledge-populator.test.ts (8 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (8 pass)
+- **Notes / blockers:**
+  - populateKBFromConfirmation(store, version) → PopulateKBResult
+  - Only populates from confirmed versions
+  - Supersedes prior entries for same project
+  - Maps requirements → approved, approved assumptions → approved, rejected assumptions → rejected
+
+### Task: MCP-Style Tool Definitions (Step 4)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/knowledge-tools.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/knowledge-tools.test.ts (10 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (10 pass)
+- **Notes / blockers:**
+  - 5 query tools: getApprovedRequirements, getApprovedAssumptions, getDecisions, getDesignRules, getReviews
+  - All return KBToolResult { entries: {id, contentJson, createdAt}[], count }
+  - KB_TOOL_REGISTRY for lookup
+
+### Task: Tool Telemetry Logging (Step 5)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/knowledge-tool-telemetry.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/knowledge-tool-telemetry.test.ts (4 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (4 pass)
+- **Notes / blockers:**
+  - logToolUsage() calls recordTaskRun with taskType kb-tool:<toolName>, model 'mock', 0 tokens
+  - Uses model 'mock' (not 'none') because estimateCost requires valid model pricing
+
+### Task: ProposalStrategistAgent Contract (Step 6)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/contracts/proposal-strategist-agent.ts (NEW)
+  - packages/agent-core/src/contracts/index.ts (MODIFIED)
+  - packages/agent-core/src/contracts.test.ts (MODIFIED)
+- **Tests added/updated:**
+  - contracts.test.ts — 71 tests (up from 59; +12 for proposal-strategist-agent)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (71 pass)
+- **Notes / blockers:**
+  - agentId: proposal-strategist-agent, model: claude-3-sonnet, cost cap: £0.75
+  - Agent count: 8 → 9
+  - Frameworks: offer-economics, market-awareness
+  - BLOCKS without approved requirements via KB
+
+### Task: Agent-KB Integration (Step 7)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/knowledge-agent-integration.ts (NEW)
+- **Tests added/updated:**
+  - packages/agent-core/src/knowledge-agent-integration.test.ts (8 tests)
+- **Commands run:**
+  - pnpm --filter @agency/agent-core test (8 pass)
+- **Notes / blockers:**
+  - AGENT_KB_TOOL_ACCESS map defining per-agent tool access
+  - loadKBForAgent(store, agentId, projectId) → KBLoadResult
+  - ProposalStrategistAgent BLOCKS if no approved requirements
+
+### Task: Wire KB into Confirm Route (Step 8)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - apps/api/src/routes/requirements-v2.ts (MODIFIED — added KB imports + auto-populate call)
+  - apps/api/src/routes/requirements-v2.test.ts (MODIFIED — added 5 KB tests)
+- **Tests added/updated:**
+  - requirements-v2.test.ts — 24 tests (up from 19; +5 KB auto-populate tests)
+- **Commands run:**
+  - pnpm --filter @agency/api test (24 pass)
+  - pnpm build --filter @agency/agent-core (required for cross-package resolution)
+- **Notes / blockers:**
+  - Exported knowledgeStore from requirements-v2.ts
+  - populateKBFromConfirmation called after status = 'confirmed'
+  - KB tests verify requirements, approved assumptions, rejected assumptions populated
+
+### Task: Barrel Exports (Step 9)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - packages/agent-core/src/index.ts (MODIFIED — ~30 new export lines)
+- **Tests added/updated:**
+  - N/A (exports only)
+- **Commands run:**
+  - pnpm typecheck (passed)
+- **Notes / blockers:**
+  - All KB exports: schemas, types, store, populator, tools, telemetry, agent integration
+
+### Task: Documentation Restructure (Step 10)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - docs/architecture/system-overview.md (NEW)
+  - docs/architecture/event-flow.md (NEW)
+  - docs/architecture/governance-model.md (NEW)
+  - docs/agents/index.md (NEW)
+  - docs/agents/research.md (NEW)
+  - docs/agents/strategy-funnel.md (NEW)
+  - docs/agents/copy-messaging.md (NEW)
+  - docs/agents/automation-crm.md (NEW)
+  - docs/agents/ux-design-agent.md (NEW)
+  - docs/agents/quality-control.md (NEW)
+  - docs/agents/business-architect.md (NEW)
+  - docs/agents/requirements-engineer.md (NEW)
+  - docs/agents/proposal-strategist.md (NEW)
+  - docs/features/discovery-to-requirements.md (NEW)
+  - docs/features/clarification-interview.md (NEW)
+  - docs/features/assumptions-approval.md (NEW)
+  - docs/features/proposal-generation.md (NEW)
+  - docs/knowledge/knowledge-base.md (NEW)
+  - docs/knowledge/mcp-tooling.md (NEW)
+  - docs/docs/ (REMOVED — 15 old files)
+- **Tests added/updated:**
+  - N/A (documentation only)
+- **Commands run:**
+  - N/A
+- **Notes / blockers:**
+  - Restructured from flat docs/docs/00-14 into docs/architecture/, docs/agents/, docs/features/, docs/knowledge/
+  - Architecture: 3 files merged from 00+01+08+12+14, 03+05+10, 02+06+07+11
+  - Agents: 10 files (index + 9 agent docs)
+  - Features: 4 files (discovery, clarification, assumptions, proposal)
+  - Knowledge: 2 files (knowledge-base, mcp-tooling)
+
+### Task: Future Upgrades Update (Step 11)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - docs/future-upgrades.md (MODIFIED — added Knowledge Base section)
+- **Tests added/updated:**
+  - N/A (documentation only)
+- **Commands run:**
+  - N/A
+- **Notes / blockers:**
+  - Added Knowledge Base section with 4 entries
+  - Vector search / embeddings as PLANNED
+  - KB persistence (database-backed) as PLANNED
+
+### Task: Logging + Verification (Step 12)
+- **Status:** SUPERSEDED
+- **Files touched:**
+  - progress/task-log.md, progress/decision-log.md
+- **Tests added/updated:**
+  - N/A (verification)
+- **Commands run:**
+  - pnpm test — 573 tests pass (395 agent-core + 78 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - All 64 new KB tests green
+  - All existing tests green (no regressions)
+  - Documentation restructured into architecture/agents/features/knowledge
+
+---
+
 ## Step 4 – Requirements + Assumptions Loop (Auto-Regenerate on Change)
 
 ### Task: Create requirements schemas (Step 4.1)
@@ -1050,5 +1238,121 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - Exported: buildGenerateHooks, buildReviewApprovedHooks
   - All 28 portal.test.ts tests still green (stubs untouched)
   - All 8 build.test.ts tests still green (updated integration)
+
+---
+
+## Step 4.5 REDO — DB-first Knowledge Base + MCP Tooling + Documentation Restructure
+
+### Task: Remove ProposalStrategistAgent (Wave 1.1)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/contracts/proposal-strategist-agent.ts (DELETED)
+  - packages/agent-core/src/contracts/index.ts (MODIFIED — removed all proposal-strategist exports, routing, caps, frameworks)
+  - packages/agent-core/src/contracts.test.ts (MODIFIED — removed proposal-strategist tests, agent count 9 → 8, total 71 → 59)
+  - packages/agent-core/src/knowledge-agent-integration.ts (MODIFIED — removed proposal-strategist, expanded to 8 agents)
+  - packages/agent-core/src/knowledge-agent-integration.test.ts (REWRITTEN — 20 tests for 8-agent config)
+  - packages/agent-core/src/knowledge-tool-telemetry.test.ts (MODIFIED — updated agentId)
+  - packages/agent-core/src/index.ts (MODIFIED — removed proposal-strategist export, added getRejectedAssumptions)
+  - docs/agents/proposal-strategist.md (DELETED)
+  - docs/agents/index.md (MODIFIED — removed proposal-strategist row, updated KB access for all agents)
+  - docs/agents/quality-control.md (MODIFIED — removed ProposalStrategist from inputs)
+  - docs/agents/requirements-engineer.md (MODIFIED — removed Proposal Strategist from approval gates)
+  - docs/architecture/system-overview.md (MODIFIED — removed all ProposalStrategist references, agent count 9 → 8)
+- **Tests added/updated:**
+  - contracts.test.ts — 59 tests (down from 71)
+  - knowledge-agent-integration.test.ts — 20 tests (up from 8, fully rewritten)
+- **Commands run:**
+  - pnpm test — 575 tests pass
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Agent count: 9 → 8
+  - ProposalStrategistAgent removed entirely (Step 5 concern, not Step 4.5)
+  - All historical task-log references preserved
+
+### Task: Add knowledge_entries DB table (Wave 1.2)
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/db/schema.ts (MODIFIED — added knowledgeEntryTypeEnum, knowledgeEntrySourceEnum, knowledgeEntryStatusEnum, knowledgeEntries table, KnowledgeEntryRow/NewKnowledgeEntryRow types)
+- **Tests added/updated:**
+  - N/A (schema only, typecheck validates)
+- **Commands run:**
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Follows existing drizzle patterns (pgTable, pgEnum, uuid pk with defaultRandom, timestamp defaults)
+  - References projects.id via foreign key
+  - JSONB contentJson column
+
+### Task: Add getRejectedAssumptions MCP tool (Wave 3.1)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/knowledge-tools.ts (MODIFIED — added getRejectedAssumptions, expanded registry to 6 tools)
+  - packages/agent-core/src/knowledge-tools.test.ts (MODIFIED — added 2 tests for getRejectedAssumptions, registry count 5 → 6)
+  - packages/agent-core/src/index.ts (MODIFIED — added getRejectedAssumptions export)
+- **Tests added/updated:**
+  - knowledge-tools.test.ts — 12 tests (up from 10)
+- **Commands run:**
+  - pnpm test — all pass
+- **Notes / blockers:**
+  - Requirements-engineer-agent exception: gets getRejectedAssumptions to iterate better
+  - All other agents restricted to approved entries only
+  - Registry now has 6 tools
+
+### Task: Rewrite Agent-KB Integration for 8 agents (Wave 3.3)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/knowledge-agent-integration.ts (MODIFIED — new 8-agent access map, blocking logic for requirements-engineer and quality-control)
+  - packages/agent-core/src/knowledge-agent-integration.test.ts (REWRITTEN — 20 tests)
+- **Tests added/updated:**
+  - knowledge-agent-integration.test.ts — 20 tests
+- **Commands run:**
+  - pnpm test — all pass
+- **Notes / blockers:**
+  - research-agent: [] (no KB — facts from external sources)
+  - business-architect-agent: getDecisions, getDesignRules
+  - requirements-engineer-agent: getApprovedRequirements, getRejectedAssumptions
+  - strategy-funnel-agent: getDesignRules, getDecisions
+  - copy-messaging-agent: getDesignRules
+  - automation-crm-agent: getDesignRules
+  - ux-design-agent: getDesignRules
+  - quality-control-agent: all 5 approved tools
+  - Agents with empty tool list always succeed with empty data
+  - requirements-engineer + quality-control BLOCK when required tools return empty
+
+### Task: Documentation restructure (Wave 4)
+- **Status:** DONE
+- **Files touched:**
+  - docs/index.md (NEW — root navigation)
+  - docs/archive/original-00-14-index.md (NEW — reference mapping)
+  - docs/features/proposal-generation.md (REWRITTEN — now "Build Pipeline" without ProposalStrategist)
+  - docs/knowledge/knowledge-base.md (REWRITTEN — DB-first, full schema, supersede behavior, design decisions)
+  - docs/knowledge/mcp-tooling.md (REWRITTEN — 6 tools, 8-agent access matrix, getRejectedAssumptions exception)
+  - docs/future-upgrades.md (MODIFIED — embeddings "optional accelerator — never source of truth", KB persistence marked DONE)
+  - docs/architecture/system-overview.md (MODIFIED — agent count, flow, frameworks, routing, cost caps, test counts)
+- **Tests added/updated:**
+  - N/A (documentation only)
+- **Commands run:**
+  - N/A
+- **Notes / blockers:**
+  - All 8 agent docs verified: Purpose, Inputs, Outputs, Restrictions, Failure Modes, Approval Gates
+  - All 4 feature docs verified: Trigger, Steps, Agents, Approval Points, Failure Handling
+  - Knowledge docs explain truth, approval, access
+
+### Task: Verification + logging (Wave 5)
+- **Status:** DONE
+- **Files touched:**
+  - progress/task-log.md (MODIFIED — old Step 4.5 tasks marked SUPERSEDED, new tasks added)
+  - progress/decision-log.md (MODIFIED — 5 new decisions)
+- **Tests added/updated:**
+  - N/A (verification)
+- **Commands run:**
+  - pnpm test — 575 tests pass (397 agent-core + 78 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - All proposal-strategist references removed (except historical task-log entries)
+  - 6 MCP tools (5 approved + 1 rejected assumptions)
+  - 8 agents with correct KB access
+  - knowledge_entries drizzle table added
+  - InMemoryKnowledgeStore kept for tests
 
 ---

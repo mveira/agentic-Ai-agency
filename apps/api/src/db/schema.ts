@@ -144,6 +144,52 @@ export const taskRuns = pgTable('task_runs', {
 });
 
 /**
+ * Knowledge entry type enum.
+ */
+export const knowledgeEntryTypeEnum = pgEnum('knowledge_entry_type', [
+  'requirement',
+  'assumption',
+  'decision',
+  'design-rule',
+  'review',
+]);
+
+/**
+ * Knowledge entry source enum.
+ */
+export const knowledgeEntrySourceEnum = pgEnum('knowledge_entry_source', [
+  'agent',
+  'human',
+]);
+
+/**
+ * Knowledge entry status enum.
+ */
+export const knowledgeEntryStatusEnum = pgEnum('knowledge_entry_status', [
+  'approved',
+  'rejected',
+  'superseded',
+]);
+
+/**
+ * Knowledge entries table — structured knowledge base for projects.
+ * Entries represent approved requirements, assumptions, decisions,
+ * design rules, and reviews populated from confirmed requirement versions.
+ */
+export const knowledgeEntries = pgTable('knowledge_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  projectId: uuid('project_id')
+    .references(() => projects.id)
+    .notNull(),
+  type: knowledgeEntryTypeEnum('type').notNull(),
+  source: knowledgeEntrySourceEnum('source').notNull(),
+  versionRef: text('version_ref'),
+  contentJson: jsonb('content_json').notNull(),
+  status: knowledgeEntryStatusEnum('status').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
  * Event status enum for the event bus.
  */
 export const eventStatusEnum = pgEnum('event_status', [
@@ -196,3 +242,5 @@ export type TaskRun = typeof taskRuns.$inferSelect;
 export type NewTaskRun = typeof taskRuns.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+export type KnowledgeEntryRow = typeof knowledgeEntries.$inferSelect;
+export type NewKnowledgeEntryRow = typeof knowledgeEntries.$inferInsert;

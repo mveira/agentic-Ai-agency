@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Hono } from 'hono';
-import { requirementsV2Router, requirementsVersionStore, resetPlanner } from './requirements-v2.js';
+import { requirementsV2Router, requirementsVersionStore, knowledgeStore, resetPlanner } from './requirements-v2.js';
 
 const TEST_PROJECT_ID = 'proj-test-1';
 
@@ -176,6 +176,7 @@ describe('POST /api/projects/:projectId/requirements/:versionId/confirm', () => 
 
   beforeEach(async () => {
     requirementsVersionStore.clear();
+    knowledgeStore.clear();
     resetPlanner();
     app = createTestApp();
     await generateVersion(app);
@@ -480,5 +481,107 @@ describe('POST /api/projects/:projectId/requirements/:versionId/review/decide', 
     const body = await res.json();
     expect(body.decision).toBe('REJECTED');
     expect(body.status).toBe('rejected');
+  });
+});
+
+describe('KB auto-populate on confirm', () => {
+  let app: Hono;
+
+  beforeEach(async () => {
+    requirementsVersionStore.clear();
+    knowledgeStore.clear();
+    resetPlanner();
+    app = createTestApp();
+    await generateVersion(app);
+  });
+
+  async function confirmAll() {
+    const getRes = await app.request(
+      `/api/projects/${TEST_PROJECT_ID}/requirements/v1`
+    );
+    const version = await getRes.json();
+
+    const confirmBody = {
+      requirements: version.requirements.map((r: { id: string }) => ({
+        id: r.id,
+        confirmed: true,
+      })),
+      assumptions: version.assumptions.map((a: { id: string }) => ({
+        id: a.id,
+        status: 'approved',
+      })),
+    };
+
+    return app.request(
+      `/api/projects/${TEST_PROJECT_ID}/requirements/v1/confirm`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(confirmBody),
+      }
+    );
+  }
+
+  it('populates KB with requirement entries on confirm', async () => {
+    await confirmAll();
+
+    const entries = knowledgeStore.getByProjectAndType(TEST_PROJECT_ID, 'requirement');
+    expect(entries.length).toBeGreaterThan(0);
+    expect(entries[0]!.status).toBe('approved');
+    expect(entries[0]!.type).toBe('requirement');
+  });
+
+  it('populates KB with approved assumption entries on confirm', async () => {
+    await confirmAll();
+
+    const entries = knowledgeStore.getByProjectTypeAndStatus(TEST_PROJECT_ID, 'assumption', 'approved');
+    expect(entries.length).toBeGreaterThan(0);
+  });
+
+  it('does NOT populate KB on regeneration (rejected)', async () => {
+    const getRes = await app.request(
+      `/api/projects/${TEST_PROJECT_ID}/requirements/v1`
+    );
+    const version = await getRes.json();
+
+    const confirmBody = {
+      requirements: [
+        { id: version.requirements[0].id, confirmed: false, changeNote: 'Bad' },
+      ],
+      assumptions: version.assumptions.map((a: { id: string }) => ({
+        id: a.id,
+        status: 'approved',
+      })),
+    };
+
+    await app.request(
+      `/api/projects/${TEST_PROJECT_ID}/requirements/v1/confirm`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(confirmBody),
+      }
+    );
+
+    // KB should be empty since regeneration happened (not confirmed)
+    const entries = knowledgeStore.getByProject(TEST_PROJECT_ID);
+    expect(entries).toHaveLength(0);
+  });
+
+  it('contentJson contains requirement data', async () => {
+    await confirmAll();
+
+    const entries = knowledgeStore.getByProjectAndType(TEST_PROJECT_ID, 'requirement');
+    const entry = entries[0]!;
+    expect(entry.contentJson).toBeDefined();
+    expect(entry.contentJson.title).toBeDefined();
+    expect(entry.contentJson.priority).toBeDefined();
+  });
+
+  it('versionRef matches the confirmed version', async () => {
+    await confirmAll();
+
+    const entries = knowledgeStore.getByProject(TEST_PROJECT_ID);
+    entries.forEach((e) => expect(e.versionRef).toBe('v1'));
   });
 });

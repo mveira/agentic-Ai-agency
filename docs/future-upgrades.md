@@ -92,6 +92,17 @@
 
 ---
 
+## Knowledge Base
+
+| Upgrade | Status | Notes |
+|---------|--------|-------|
+| Vector search / embeddings | PLANNED | Optional accelerator — never source of truth. Add semantic search over KB entries using embeddings. Enables natural-language queries against approved requirements, assumptions, and decisions. No vector DB selected yet — evaluate pgvector, Pinecone, or Weaviate. The structured query system remains the authoritative access path. |
+| KB persistence (database-backed) | DONE | knowledge_entries Drizzle table added. InMemoryKnowledgeStore kept for tests. |
+| KB entry versioning | IDEA | Track individual entry edits beyond supersede. Full audit trail per entry. |
+| Cross-project KB patterns | IDEA | Identify common patterns across projects for template generation. |
+
+---
+
 ## Notes
 
 <!-- Append-only: add new notes below this line -->

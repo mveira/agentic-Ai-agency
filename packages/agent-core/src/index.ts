@@ -214,3 +214,45 @@ export type {
   GenerateHookParams,
   ReviewApprovedHookParams,
 } from './requirements-hooks.js';
+
+// Knowledge Schemas (Step 4.5)
+export {
+  KnowledgeEntryTypeSchema,
+  KnowledgeEntrySourceSchema,
+  KnowledgeEntryStatusSchema,
+  KnowledgeEntrySchema,
+} from './knowledge-schemas.js';
+export type {
+  KnowledgeEntryType,
+  KnowledgeEntrySource,
+  KnowledgeEntryStatus,
+  KnowledgeEntry,
+} from './knowledge-schemas.js';
+
+// Knowledge Store (Step 4.5)
+export { InMemoryKnowledgeStore } from './knowledge-store.js';
+export type { KnowledgeStore } from './knowledge-store.js';
+
+// Knowledge Populator (Step 4.5)
+export { populateKBFromConfirmation } from './knowledge-populator.js';
+export type { PopulateKBResult } from './knowledge-populator.js';
+
+// Knowledge Tools (Step 4.5)
+export {
+  getApprovedRequirements,
+  getApprovedAssumptions,
+  getDecisions,
+  getDesignRules,
+  getReviews,
+  getRejectedAssumptions,
+  KB_TOOL_REGISTRY,
+} from './knowledge-tools.js';
+export type { KBToolResult, KBToolResultEntry, KBToolFn } from './knowledge-tools.js';
+
+// Knowledge Tool Telemetry (Step 4.5)
+export { logToolUsage } from './knowledge-tool-telemetry.js';
+export type { LogToolUsageParams } from './knowledge-tool-telemetry.js';
+
+// Knowledge Agent Integration (Step 4.5)
+export { AGENT_KB_TOOL_ACCESS, loadKBForAgent } from './knowledge-agent-integration.js';
+export type { KBLoadResult } from './knowledge-agent-integration.js';

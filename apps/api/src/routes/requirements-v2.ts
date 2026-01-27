@@ -10,20 +10,23 @@ import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import {
   InMemoryRequirementsVersionStore,
+  InMemoryKnowledgeStore,
   ConfirmPayloadSchema,
   RequirementsEngineerPlanner,
   createMockBundleOutput,
   InMemoryStrapiProvider,
   MockLLMAdapter,
+  populateKBFromConfirmation,
 } from '@agency/agent-core';
 import type {
   RequirementsVersionRecord,
   ChangeRequest,
 } from '@agency/agent-core';
 
-// ─── Shared Store ────────────────────────────────────────────────────────────
+// ─── Shared Stores ───────────────────────────────────────────────────────────
 
 export const requirementsVersionStore = new InMemoryRequirementsVersionStore();
+export const knowledgeStore = new InMemoryKnowledgeStore();
 
 // ─── Mock Planner Setup ──────────────────────────────────────────────────────
 
@@ -244,6 +247,9 @@ requirementsV2Router.post(
       // All confirmed
       version.status = 'confirmed';
       await requirementsVersionStore.store(version);
+
+      // Populate KB from confirmed version
+      populateKBFromConfirmation(knowledgeStore, version);
 
       return c.json({
         success: true,

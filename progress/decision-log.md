@@ -21,6 +21,79 @@ Use this format for all architectural and technical decisions:
 
 ---
 
+## Step 4.5 REDO — DB-first Knowledge Base + MCP Tooling
+
+### Decision: DB-first knowledge base (knowledge_entries drizzle table)
+- **Date:** 2026-01-27
+- **Context:** Knowledge base needed structured persistence matching the existing drizzle pattern
+- **Decision:** Add knowledge_entries table to drizzle schema with pgEnum types for entry type, source, and status. InMemoryKnowledgeStore kept for tests.
+- **Reason:** Consistent with existing DB patterns (events, taskRuns); provides real persistence path; in-memory store sufficient for test isolation
+- **Alternatives considered:**
+  - Embeddings/vector DB (premature, not needed for structured queries)
+  - JSON file storage (not suitable for production, no concurrent access)
+- **Impact:**
+  - knowledge_entries table with uuid pk, project FK, type/source/status enums, JSONB content
+  - InMemoryKnowledgeStore unchanged for test compatibility
+- **Status:** Approved
+
+### Decision: MCP-style tool access (6 tools, all read-only)
+- **Date:** 2026-01-27
+- **Context:** Agents need controlled, read-only access to KB data through a standardized interface
+- **Decision:** 6 MCP-style tools (getApprovedRequirements, getApprovedAssumptions, getDecisions, getDesignRules, getReviews, getRejectedAssumptions). Token-efficient payloads. Pre-load pattern via loadKBForAgent().
+- **Reason:** Stateless pure functions are easy to test; pre-load keeps agents focused; registry enables programmatic lookup
+- **Alternatives considered:**
+  - Full MCP protocol (overkill for internal use)
+  - Direct store queries by agents (breaks encapsulation, harder to control access)
+- **Impact:**
+  - All 8 agents have declared tool access lists
+  - Agents cannot bypass the tool layer to query the store directly
+  - Token-efficient payloads minimize context window usage
+- **Status:** Approved
+
+### Decision: Embeddings deferred (optional accelerator, never source of truth)
+- **Date:** 2026-01-27
+- **Context:** Vector search could enhance KB queries but is not needed for the current structured query pattern
+- **Decision:** Defer embeddings/vector search as PLANNED future upgrade. Structured queries remain the authoritative access path. Embeddings will never replace structured queries as source of truth.
+- **Reason:** Structured queries are deterministic and auditable; embeddings add complexity and non-determinism; current use cases don't require semantic search
+- **Alternatives considered:**
+  - Implement embeddings now (premature, adds pgvector dependency)
+  - Never implement embeddings (too restrictive for future)
+- **Impact:**
+  - future-upgrades.md updated with explicit "optional accelerator — never source of truth" note
+  - No vector DB dependency added
+- **Status:** Approved
+
+### Decision: Remove ProposalStrategistAgent (Step 5 concern)
+- **Date:** 2026-01-27
+- **Context:** ProposalStrategistAgent was added in Step 4.5 but properly belongs in Step 5. Its presence in the KB layer added unnecessary complexity.
+- **Decision:** Remove ProposalStrategistAgent entirely from contracts, index, tests, docs, and KB integration. Agent count: 9 → 8.
+- **Reason:** Step 4.5 is about KB infrastructure, not proposal generation. The agent will be re-introduced in Step 5 if needed.
+- **Alternatives considered:**
+  - Keep the agent (adds maintenance burden, confuses layer boundaries)
+  - Move to separate file (still present in the wrong step)
+- **Impact:**
+  - All 9-agent references updated to 8
+  - All contract, test, and doc references removed
+  - Historical task-log entries preserved
+- **Status:** Approved
+
+### Decision: Requirements-engineer exception for rejected assumptions
+- **Date:** 2026-01-27
+- **Context:** Requirements-engineer-agent needs to understand why previous assumptions were rejected to iterate effectively on requirement versions
+- **Decision:** Grant requirements-engineer-agent access to getRejectedAssumptions as an exception to the "approved entries only" rule. All other agents restricted to approved entries only.
+- **Reason:** Without rejected assumption context, the requirements-engineer would regenerate the same flawed requirements. This exception is narrowly scoped and explicitly documented.
+- **Alternatives considered:**
+  - No exception (requirements-engineer iterates blind, lower quality)
+  - All agents get rejected access (too broad, violates least-privilege)
+  - Pass rejection reasons via input params (adds coupling, harder to trace)
+- **Impact:**
+  - requirements-engineer-agent: getApprovedRequirements + getRejectedAssumptions
+  - All other agents: approved entries only
+  - getRejectedAssumptions tool added to KB_TOOL_REGISTRY (6 tools total)
+- **Status:** Approved
+
+---
+
 ## Step 4 – Requirements + Assumptions Loop
 
 ### Decision: New route file for project-scoped requirements endpoints
