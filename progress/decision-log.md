@@ -583,6 +583,35 @@ Use this format for all architectural and technical decisions:
   - Agent output is guaranteed compliant if it parses
 - **Status:** Approved
 
+### Decision: PM agent is internal-only, deterministic, and read-only
+- **Date:** 2026-01-27
+- **Context:** Step 6.0.1 requires internal project management capabilities for readiness, blockers, and ops reporting
+- **Decision:** Implement as a pure computation engine (PMEngine class), not an LLM agent. No agent contract, no LLM calls. Deterministic JSON outputs from stored state only.
+- **Reason:** PM logic is deterministic gate-checking and metric computation — no creative output needed. Using an LLM would add cost, latency, and non-determinism without benefit.
+- **Alternatives considered:**
+  - LLM-powered agent with contract (rejected — adds cost and non-determinism for purely computational logic)
+  - Inline logic in API routes (rejected — untestable, not reusable)
+- **Impact:**
+  - PMEngine is a pure class with PMDataProvider dependency injection
+  - All computations are deterministic from stored state
+  - withPMMetrics() wrapper provides observability without OTel dependency
+  - No agent contract exists; PM engine is infrastructure, not an agent
+- **Status:** Approved
+
+### Decision: PMDataProvider interface for store abstraction
+- **Date:** 2026-01-27
+- **Context:** PM engine needs data from KB, proposals, telemetry, events, and budget stores
+- **Decision:** Define PMDataProvider interface with 10 methods covering all required data access. In-memory mock provider for routes/tests; production will use DB-backed implementation.
+- **Reason:** Consistent with existing adapter/interface patterns (GHLAdapter, TokenVerifier, EventStore). Enables full testing without any database.
+- **Alternatives considered:**
+  - Direct store queries in PM engine (tight coupling, harder to test)
+  - Pass individual stores to PM engine (too many constructor params, leaky abstraction)
+- **Impact:**
+  - Single interface abstracts all PM data needs
+  - Mock provider returns safe defaults (budget not configured, no task runs, healthy integrations)
+  - Production swaps to DB-backed provider without changing PM engine logic
+- **Status:** Approved
+
 ### Decision: Human review required before proposal can be SENT
 - **Date:** 2026-01-27
 - **Context:** Spec mandates human review gate before proposals reach clients

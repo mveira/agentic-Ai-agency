@@ -314,3 +314,41 @@ export type {
   StoredProposalAction,
   ProposalStore,
 } from './proposal-orchestrator.js';
+
+// PM Schemas (Step 6.0.1)
+export {
+  ProjectPhaseSchema,
+  ReadinessStatusSchema,
+  BlockerTypeSchema,
+  BlockerSeveritySchema,
+  BlockerReferenceSchema,
+  BlockerSchema,
+  GatesSchema,
+  NextAllowedActionSchema,
+  SuggestedAutomationSchema,
+  ProjectReadinessReportSchema,
+  CompletionSchema,
+  CostsSchema,
+  HealthSchema,
+  ProjectOpsSummarySchema,
+} from './pm-schemas.js';
+export type {
+  ProjectPhase,
+  ReadinessStatus,
+  BlockerType,
+  BlockerSeverity,
+  BlockerReference,
+  Blocker,
+  Gates,
+  NextAllowedAction,
+  SuggestedAutomation,
+  ProjectReadinessReport,
+  Completion,
+  Costs,
+  Health,
+  ProjectOpsSummary,
+} from './pm-schemas.js';
+
+// PM Engine (Step 6.0.1)
+export { PMEngine, withPMMetrics } from './pm-engine.js';
+export type { PMDataProvider, PMEngineConfig, PMComputeMetrics } from './pm-engine.js';

@@ -1454,3 +1454,97 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - 16 value exports, 17 type exports for proposal system
 
 ---
+
+## Step 6.0.1 – Internal ProjectManagementAgent (Readiness, Orchestration, Ops Reporting)
+
+### Task: Create PM domain schemas (Zod)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/pm-schemas.ts (CREATED)
+- **Tests added/updated:**
+  - packages/agent-core/src/pm-schemas.test.ts (17 tests)
+- **Commands run:**
+  - pnpm test — 17 schema tests pass
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - ProjectPhaseSchema (6 phases: INTAKE, CLARIFICATION, REQUIREMENTS, PROPOSAL, BUILD, SUPPORT)
+  - ReadinessStatusSchema (4 statuses: READY, BLOCKED, NEEDS_HUMAN, NOT_APPLICABLE)
+  - BlockerSchema with type, severity, message, optional references
+  - GatesSchema (6 optional boolean gates)
+  - ProjectReadinessReportSchema, ProjectOpsSummarySchema
+  - Constraints: completion.percent 0-100, health.errorRate 0-1
+
+### Task: Create PM engine (readiness, blockers, ops)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/pm-engine.ts (CREATED)
+- **Tests added/updated:**
+  - packages/agent-core/src/pm-engine.test.ts (18 tests)
+- **Commands run:**
+  - pnpm test — 18 engine tests pass
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - PMDataProvider interface abstracts all store reads (KB, proposals, telemetry, events, budget)
+  - PMEngine class: computeReadiness(), detectBlockers(), computeOpsSummary()
+  - Phase-specific readiness: INTAKE always READY, PROPOSAL needs reqs+assumptions, BUILD needs proposal review
+  - Blocker detection: MISSING_APPROVAL, BUDGET_EXCEEDED, REPEATED_FAILURE, STALE_QUEUE, INTEGRATION_DOWN
+  - withPMMetrics() observability wrapper (timing + structured metrics)
+  - NOT an LLM agent — deterministic computation engine
+
+### Task: Create internal PM API routes + tests
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/internal-pm.ts (CREATED)
+  - apps/api/src/routes/internal-pm.test.ts (CREATED)
+  - apps/api/src/index.ts (MODIFIED — wired internalPMRouter)
+- **Tests added/updated:**
+  - apps/api/src/routes/internal-pm.test.ts (9 tests)
+- **Commands run:**
+  - pnpm test — 100 API tests pass (9 new)
+- **Notes / blockers:**
+  - GET /:projectId/readiness?phase= — ProjectReadinessReport
+  - GET /:projectId/ops?phase= — ProjectOpsSummary
+  - GET /:projectId/blockers — Blocker[]
+  - POST /:projectId/next-actions — NextAllowedAction[]
+  - zValidator for phase parameter validation
+  - PMDataProvider reads from InMemoryKnowledgeStore + InMemoryProposalStore
+  - TODO: Apply createAuthMiddleware + isAgencyUser when auth is wired
+
+### Task: Create ops dashboard page
+- **Status:** DONE
+- **Files touched:**
+  - apps/dashboard/src/app/internal/projects/[id]/ops/page.tsx (CREATED)
+- **Tests added/updated:**
+  - N/A (UI page, API stubs tested separately)
+- **Commands run:**
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Client component with useEffect data fetching from internal PM API
+  - Phase selector dropdown (6 phases)
+  - Readiness badge (color-coded: green/red/amber/gray)
+  - Gates checklist (✓/✗ per gate)
+  - Blockers list (severity-colored left border)
+  - Next actions (human/agent tagged with badge)
+  - Costs section (total + last 24h)
+  - Health section (queue depth, error rate, completion %)
+  - Inline styles matching existing dashboard pattern
+
+### Task: Update barrel exports + verification + logging
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/index.ts (MODIFIED — PM schemas + engine exports)
+  - apps/api/src/routes/internal-pm.ts (MODIFIED — lint fixes)
+  - progress/task-log.md (MODIFIED)
+  - progress/decision-log.md (MODIFIED)
+- **Tests added/updated:**
+  - N/A (verification)
+- **Commands run:**
+  - pnpm test — 671 tests pass (471 agent-core + 100 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - 14 PM schema value exports, 15 PM schema type exports
+  - PMEngine class, withPMMetrics, PMDataProvider, PMEngineConfig, PMComputeMetrics exports
+  - Lint fixes: removed unused TEST_PROJECT_ID, prefixed unused _projectId param, destructured only result (not metrics)
+
+---
