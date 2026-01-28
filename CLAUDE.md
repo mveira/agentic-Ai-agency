@@ -5,6 +5,22 @@ These rules are permanent and must be followed in all runs.
 
 ---
 
+## DOCUMENTATION IS A RULE (NON-NEGOTIABLE)
+
+Before acting on any feature, you MUST:
+
+1. **Read the System Handbook** — `docs/system-handbook.md` is the behavioural source of truth. Understand the 9-stage journey and global rules before making changes.
+
+2. **Read the relevant Feature Record** — Check `docs/features/<feature>.md` for the feature you are working on. Understand allowed actions, forbidden actions, failure modes, and escalation rules.
+
+3. **If a Feature Record is missing, STOP and create it** — No build or modification without a feature record. A Phase A high-level record is acceptable for first drafts. Use the template in `docs/features/README.md`.
+
+4. **If behaviour changes, update docs first** — Before changing code that affects documented behaviour, update the System Handbook and/or Feature Record. Code must match documentation.
+
+**Violation of this rule is a task failure.**
+
+---
+
 ## 1. READ BEFORE DOING ANYTHING
 
 Before making changes, you MUST:

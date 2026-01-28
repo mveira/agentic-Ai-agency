@@ -1,5 +1,11 @@
 # Agency AI OS — Documentation
 
+## System Handbook
+
+**The authoritative behavioural source of truth.**
+
+- [System Handbook](system-handbook.md) — 9-stage journey, global rules, agent boundaries, escalation protocols
+
 ## Architecture
 
 System design, event flows, and governance model.
@@ -26,8 +32,10 @@ Agent contracts, capabilities, restrictions, and KB access.
 
 End-to-end feature flows with triggers, agents, approval points, and failure handling.
 
+- [Feature Records README](features/README.md) — Template and rules for feature documentation
 - [Discovery to Requirements](features/discovery-to-requirements.md)
 - [Clarification Interview](features/clarification-interview.md)
+- [Requirements & Assumptions](features/requirements-and-assumptions.md)
 - [Assumptions Approval](features/assumptions-approval.md)
 - [Build Pipeline](features/proposal-generation.md)
 

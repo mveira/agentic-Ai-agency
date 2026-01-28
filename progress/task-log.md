@@ -1548,3 +1548,31 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - Lint fixes: removed unused TEST_PROJECT_ID, prefixed unused _projectId param, destructured only result (not metrics)
 
 ---
+
+## Docs Backfill (Phase A) — System Handbook + Feature Records + Enforcement
+
+### Task: Create System Handbook and Feature Records with Documentation Enforcement
+- **Status:** DONE
+- **Files touched:**
+  - docs/system-handbook.md (CREATED — authoritative behavioural source of truth)
+  - docs/features/README.md (CREATED — feature record contract + template)
+  - docs/features/requirements-and-assumptions.md (CREATED — full feature record)
+  - docs/features/clarification-interview.md (UPDATED — expanded to full template format)
+  - docs/features/proposal-generation.md (UPDATED — expanded to full template format)
+  - CLAUDE.md (MODIFIED — added documentation enforcement section)
+  - progress/task-log.md (MODIFIED)
+  - progress/decision-log.md (MODIFIED)
+- **Tests added/updated:**
+  - N/A (documentation only, no runtime behaviour changes)
+- **Commands run:**
+  - pnpm lint
+  - pnpm test (if doc tooling exists)
+  - Verified all markdown files exist and are readable
+- **Notes / blockers:**
+  - System Handbook defines 9-stage journey, global rules, agent boundaries
+  - Feature README establishes non-negotiable rule: no build/modify without feature record
+  - Feature records updated to include: Purpose, Handbook Alignment, Trigger, Inputs, Outputs, Allowed Actions, Forbidden Actions, UI/UX Summary, Failure Modes, Escalation Rules, Cost Considerations, Logging & Audit
+  - CLAUDE.md now enforces documentation gate before any feature work
+  - Note: project-management-agent.md not created because no such agent exists (8 agents total: Research, StrategyFunnel, CopyMessaging, AutomationCRM, UXDesign, QualityControl, BusinessArchitect, RequirementsEngineer)
+
+---

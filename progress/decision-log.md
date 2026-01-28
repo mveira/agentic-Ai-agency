@@ -626,3 +626,50 @@ Use this format for all architectural and technical decisions:
 - **Status:** Approved
 
 ---
+
+## Docs Backfill (Phase A) — Documentation Governance
+
+### Decision: System Handbook is the behavioural source of truth
+- **Date:** 2026-01-28
+- **Context:** Documentation was scattered across architecture docs, agent docs, and inline comments. No single authoritative reference for system behaviour.
+- **Decision:** Create `docs/system-handbook.md` as the authoritative behavioural source of truth. It defines the 9-stage journey, global rules, agent boundaries, cost caps, and escalation protocols.
+- **Reason:** Agents and developers need a single reference for expected behaviour. Conflicts between code and docs should trigger escalation, not silent deviation.
+- **Alternatives considered:**
+  - Keep behaviour implicit in code (rejected — not auditable, hard to onboard)
+  - Use CLAUDE.md as sole source of truth (rejected — CLAUDE.md is for Claude execution rules, not system behaviour)
+- **Impact:**
+  - Single source of truth for all behavioural questions
+  - All behaviour changes must update handbook first
+  - Conflicts between code and handbook trigger STOP + escalate
+- **Status:** Approved
+
+### Decision: Feature Records are mandatory for builds/modifications
+- **Date:** 2026-01-28
+- **Context:** Features were documented inconsistently, with some having basic docs and others having none. No contract for what a feature doc must contain.
+- **Decision:** Create `docs/features/README.md` with a mandatory template. All features must have a record before build or modification. Template includes: Purpose, Handbook Alignment, Trigger, Inputs, Outputs, Allowed Actions, Forbidden Actions, UI/UX Summary, Failure Modes, Escalation Rules, Cost Considerations, Logging & Audit.
+- **Reason:** Ensures every feature has traceable governance, clear boundaries, and documented failure handling before implementation.
+- **Alternatives considered:**
+  - Optional documentation (rejected — leads to inconsistency)
+  - Minimal docs without template (rejected — loses value of structured contracts)
+- **Impact:**
+  - No feature work proceeds without a feature record
+  - Phase A (high-level) records acceptable for first drafts
+  - Existing feature docs updated to match template
+- **Status:** Approved
+
+### Decision: CLAUDE.md enforces documentation gate
+- **Date:** 2026-01-28
+- **Context:** Documentation rules existed but were not enforced in the Claude execution constitution.
+- **Decision:** Add "DOCUMENTATION IS A RULE (NON-NEGOTIABLE)" section to CLAUDE.md requiring: read handbook before acting, read feature record, create if missing, update docs before changing behaviour.
+- **Reason:** Makes documentation a hard gate that cannot be bypassed during AI-assisted development.
+- **Alternatives considered:**
+  - Soft reminder in docs only (rejected — would be ignored)
+  - Lint/CI enforcement (deferred — current focus is on constitution-level rules)
+- **Impact:**
+  - Claude must read docs before any feature work
+  - Missing feature records trigger STOP + create
+  - Behaviour changes require doc updates first
+  - Violation is a task failure
+- **Status:** Approved
+
+---
