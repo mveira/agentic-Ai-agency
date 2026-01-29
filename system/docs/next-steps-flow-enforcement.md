@@ -1,100 +1,81 @@
-# Next Steps: Enforcing the High-Level Flow Contract
+# Next Steps Plan (Humanised Flow Contract)
 
-This document describes what must happen to make `system/contracts/high_level_flow.json` the authoritative runtime reference for agent orchestration and workflow progression.
+This repo contains a contract describing the *human journey* the system must follow:
+- `system/contracts/high_level_flow.json`
 
-**No runtime changes have been made yet.** This is a plan only.
-
----
-
-## Status
-
-| Step | Status |
-|------|--------|
-| Flow contract created | DONE |
-| Next-steps plan written | DONE |
-| Agent prompt injection | TODO |
-| Stage gate validation | TODO |
-| Orchestrator alignment | TODO |
-| Audit & observability | TODO |
+## Why it exists
+- Prevents "AI rushing" ahead
+- Keeps assumptions explicit
+- Makes outputs predictable and client-friendly
+- Gives humans and agents the same shared mental model
 
 ---
 
-## 1. Inject Flow Contract into Agent Prompts
+## Recommended Steps (do in order)
 
-**Goal:** Every agent knows which stage it operates in and what it is allowed to do.
+### Step 1 — Agent Compliance Wrapper (highest ROI)
+**Goal:** Ensure every agent respects the flow stages.
+- Add a short instruction to each agent's prompt:
+  - "Follow the High-Level Flow contract."
+  - "Do not skip stages."
+  - "If a required stage output is missing, ask questions instead of proceeding."
 
-- Load `high_level_flow.json` at prompt compile time
-- For each agent, inject only the stages it is responsible for
-- Include `system_purpose`, `system_actions`, and `output` as prompt context
-- Include the `principle` as a global preamble
-
-**Files likely affected:**
-- `packages/agent-core/src/prompt-compiler.ts`
-- `packages/agent-core/src/contracts/*.ts` (add `flow_stages` field to contracts)
-
----
-
-## 2. Add Stage Gate Validation
-
-**Goal:** No stage transition happens without the prior stage's output being confirmed.
-
-- Before entering Stage N, verify Stage N-1 `output` exists and is valid
-- Map each stage `output` to a concrete data check (e.g., Stage 6 output = confirmed requirements in KB)
-- Block progression if the check fails; log the block reason
-
-**Files likely affected:**
-- `packages/agent-core/src/build-orchestrator.ts`
-- `packages/agent-core/src/business-architect-planner.ts`
-- `packages/agent-core/src/requirements-engineer-planner.ts`
-- New file: `packages/agent-core/src/flow-gate.ts` (stage gate checker)
+**Definition of done**
+- Every agent prompt references `high_level_flow.json`
+- Agents stop jumping to solutions when stage 6 is unconfirmed
 
 ---
 
-## 3. Align Orchestrators with Flow Stages
+### Step 2 — Stage Gates (outputs become permission)
+**Goal:** Enforce simple "can I proceed?" checks before moving forward.
+- Treat each stage `output` as a gate.
+- Do not enter Solution Design (stage 7) unless stage 6 is confirmed.
 
-**Goal:** Existing orchestrators explicitly reference flow stages rather than implicit sequencing.
-
-- `BusinessArchitectPlanner` → Stages 4-5 (Understanding & Clarification, Guided Follow-Up)
-- `RequirementsEngineerPlanner` → Stage 6 (Reflection & Assumption Confirmation)
-- `BuildOrchestrator` → Stage 7 (Solution Design)
-- QC step → Stage 8 (Second Opinion & Quality Review)
-- CRM actions → Stage 9 (Next-Step Advancement)
-- Stages 1-3 (Intent Recognition, Acknowledgement, Safety Check) → Event Bus + Governance layer
-
-Each orchestrator should log the stage it is executing against.
+**Definition of done**
+- A checklist exists that validates:
+  - stage 2 acknowledgement sent
+  - stage 3 checks passed
+  - stage 6 confirmed before stage 7
 
 ---
 
-## 4. Audit & Observability
+### Step 3 — Follow-up Question Generator
+**Goal:** Ask fewer, smarter questions.
+- Generate follow-ups only from:
+  - gaps/conflicts found in stage 4
+  - missing confirmations in stage 6
+- Ask in short rounds (avoid "20 questions").
 
-**Goal:** Every stage transition is logged with the flow contract stage reference.
-
-- Add `flow_stage` field to telemetry entries and event logs
-- Log stage entry, stage exit, and stage blocks
-- Surface stage progression in the ops dashboard
-
-**Files likely affected:**
-- `packages/telemetry/src/record.ts`
-- `packages/agent-core/src/event-bus.ts`
-- `apps/dashboard/src/app/internal/projects/[id]/ops/page.tsx`
+**Definition of done**
+- Follow-ups are targeted, minimal, and tied to stage outputs
 
 ---
 
-## 5. Update Documentation
+### Step 4 — Quality Review Checklist
+**Goal:** Reduce risk before any client exposure.
+- QC checks must verify:
+  - assumptions are labeled
+  - next steps are explicit
+  - solution matches confirmed requirements
+  - risks are called out
 
-When enforcement is built, update:
-- `docs/system-handbook.md` — align the 9-stage journey to match the contract exactly
-- `docs/features/*.md` — add `flow_stage` references to each feature record
-- `CLAUDE.md` — add rule: "Read `system/contracts/high_level_flow.json` before modifying orchestration"
+**Definition of done**
+- QC output includes pass/fail + reasons
 
 ---
 
-## Execution Order
+### Step 5 — Diagram Blueprint (human on top, system beneath)
+**Goal:** Make the system explainable in 60 seconds.
+- Create a single diagram that shows:
+  - stages 1-9 across the top (human journey)
+  - system actions underneath each stage
+  - agents appear only where they add value
 
-1. Agent prompt injection (lowest risk, highest clarity gain)
-2. Orchestrator alignment (label existing code with stages)
-3. Stage gate validation (enforce progression rules)
-4. Audit & observability (track stage transitions)
-5. Documentation update (align all docs to contract)
+**Definition of done**
+- One image/diagram spec exists and matches the JSON contract
 
-Each step should be a separate segment with its own tests and commit.
+---
+
+### Step 6 — Later: CRM mapping + automation (do NOT do yet)
+**Goal:** Map flow stages to CRM pipeline stages + triggers.
+- Only after the human journey is stable.
