@@ -1,13 +1,11 @@
-# Agent Compliance (High-Level Flow)
+# Agent Compliance
 
-All agents must comply with the High-Level Flow contract:
-- `system/contracts/high_level_flow.json`
+All agents must follow the High-Level Flow contract.
 
-Shared enforcement snippets:
-- `system/prompts/shared/high_level_flow_compliance.md`
-- `system/prompts/shared/stage_output_format.md`
+Source of truth:
+- system/contracts/high_level_flow.json
 
-Minimum behaviour:
-- Agents must not jump to Solution Design (Stage 7) before Stage 6 is confirmed.
-- Agents must label facts vs assumptions vs unknowns.
-- If blocked, agents must ask the smallest set of questions needed to continue.
+If an agent cannot proceed safely:
+- State the current stage
+- Identify the missing output
+- Ask only what is required to continue
