@@ -1,0 +1,122 @@
+{
+  "high_level_flow": {
+    "principle": "The system is designed to think with the client, not rush them, guess silently, or move forward without clarity.",
+    "stages": [
+      {
+        "stage": 1,
+        "name": "Intent Recognition",
+        "human_experience": "I took an action and they noticed immediately.",
+        "system_purpose": "Capture intent and establish context.",
+        "system_actions": [
+          "Receive form submission, booking, or inbound message",
+          "Create or update contact record",
+          "Attach source, metadata, and initial intent signals"
+        ],
+        "output": "Active lead context created"
+      },
+      {
+        "stage": 2,
+        "name": "Immediate Acknowledgement",
+        "human_experience": "I know they've got this and something is happening.",
+        "system_purpose": "Set expectations and build trust.",
+        "system_actions": [
+          "Send acknowledgement message",
+          "Communicate review is in progress",
+          "Move lead to 'In Review' state"
+        ],
+        "output": "Prospect reassured, system buys thinking time"
+      },
+      {
+        "stage": 3,
+        "name": "Deliberate Pause & Safety Check",
+        "human_experience": "They're not rushing or making assumptions.",
+        "system_purpose": "Ensure it is safe and appropriate to proceed.",
+        "system_actions": [
+          "Verify permissions and allowed actions",
+          "Check budget and usage constraints",
+          "Validate scope boundaries and governance rules"
+        ],
+        "output": "Clear go / pause / escalate decision"
+      },
+      {
+        "stage": 4,
+        "name": "Understanding & Clarification",
+        "human_experience": "They're trying to understand what I actually need.",
+        "system_purpose": "Identify what is clear, missing, or conflicting.",
+        "system_actions": [
+          "Analyse provided information",
+          "Identify gaps and unclear goals",
+          "Determine what a human consultant would ask next"
+        ],
+        "responsible_role": "Discovery & Strategy Agent",
+        "output": "Clarification plan created"
+      },
+      {
+        "stage": 5,
+        "name": "Guided Follow-Up",
+        "human_experience": "The questions make sense and feel helpful.",
+        "system_purpose": "Progressively refine understanding without overwhelm.",
+        "system_actions": [
+          "Ask targeted follow-up questions",
+          "Run multiple short clarification rounds if needed",
+          "Update context after each response"
+        ],
+        "output": "Expanded and refined requirements context"
+      },
+      {
+        "stage": 6,
+        "name": "Reflection & Assumption Confirmation",
+        "human_experience": "That's exactly what I meant — or I can correct it.",
+        "system_purpose": "Align understanding before solution design.",
+        "system_actions": [
+          "Draft requirements summary",
+          "Explicitly label assumptions vs confirmed facts",
+          "Request confirmation or corrections"
+        ],
+        "output": "Confirmed requirements with explicit assumptions"
+      },
+      {
+        "stage": 7,
+        "name": "Solution Design",
+        "human_experience": "They're now building the right thing.",
+        "system_purpose": "Design a solution based on confirmed understanding.",
+        "system_actions": [
+          "Develop strategy recommendations",
+          "Design user experience and structure",
+          "Generate messaging or copy where required"
+        ],
+        "responsible_roles": [
+          "Strategy Agent",
+          "UX Agent",
+          "Copy or Messaging Agent"
+        ],
+        "output": "Proposed solution package"
+      },
+      {
+        "stage": 8,
+        "name": "Second Opinion & Quality Review",
+        "human_experience": "This feels considered and well-thought-through.",
+        "system_purpose": "Reduce risk and improve clarity before exposure.",
+        "system_actions": [
+          "Review output for clarity and completeness",
+          "Challenge assumptions and weak logic",
+          "Flag risks or missing considerations"
+        ],
+        "responsible_role": "Quality Control Agent",
+        "output": "Validated and improved solution"
+      },
+      {
+        "stage": 9,
+        "name": "Next-Step Advancement",
+        "human_experience": "I know what happens next and who's involved.",
+        "system_purpose": "Move the relationship forward with clarity.",
+        "system_actions": [
+          "Advance CRM stage",
+          "Notify relevant human stakeholders",
+          "Prepare handoff or proposal presentation"
+        ],
+        "output": "Clear next steps and ownership established"
+      }
+    ]
+  }
+}

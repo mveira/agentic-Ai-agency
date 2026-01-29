@@ -1576,3 +1576,24 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - Note: project-management-agent.md not created because no such agent exists (8 agents total: Research, StrategyFunnel, CopyMessaging, AutomationCRM, UXDesign, QualityControl, BusinessArchitect, RequirementsEngineer)
 
 ---
+
+## High-Level Flow Contract
+
+### Task: Create High-Level Flow JSON contract and next-steps enforcement plan
+- **Status:** DONE
+- **Files touched:**
+  - system/contracts/high_level_flow.json (CREATED — 9-stage human-centred flow contract)
+  - system/docs/next-steps-flow-enforcement.md (CREATED — enforcement plan)
+  - progress/task-log.md (MODIFIED)
+  - progress/decision-log.md (MODIFIED)
+- **Tests added/updated:**
+  - N/A (documentation and contract only, no runtime changes)
+- **Commands run:**
+  - Verified JSON is well-formed
+  - Verified folders and files exist
+- **Notes / blockers:**
+  - Contract defines 9 stages with human_experience, system_purpose, system_actions, and output per stage
+  - Next-steps plan covers: prompt injection, stage gate validation, orchestrator alignment, audit, docs update
+  - No runtime behaviour changed
+
+---

@@ -673,3 +673,21 @@ Use this format for all architectural and technical decisions:
 - **Status:** Approved
 
 ---
+
+## High-Level Flow Contract
+
+### Decision: High-Level Flow JSON is the canonical stage definition
+- **Date:** 2026-01-29
+- **Context:** The system handbook describes 9 stages in prose, but no machine-readable contract exists for agents or orchestrators to reference at runtime.
+- **Decision:** Create `system/contracts/high_level_flow.json` as the canonical 9-stage flow definition. Each stage includes human_experience, system_purpose, system_actions, and expected output. An enforcement plan is stored alongside in `system/docs/`.
+- **Reason:** A JSON contract can be loaded into agent prompts and validated programmatically, unlike prose docs. Keeps the human-centred principle machine-accessible.
+- **Alternatives considered:**
+  - Embed stages directly in agent contracts (rejected — duplicates data, harder to maintain as a single flow)
+  - Use YAML (rejected — JSON is already the repo standard for structured data)
+- **Impact:**
+  - Future prompt compilation can inject stage context per agent
+  - Stage gate validation can reference this contract
+  - Orchestrators can log which stage they are executing
+- **Status:** Approved
+
+---
