@@ -107,10 +107,27 @@ Mode B enforcement separates optional enhancements from core deliverables.
 ### Stage 9: CRM Actions & Delivery
 **Trigger**: Review approved
 **Behaviour**:
+- Pipeline Router maps system events + gate states to CRM action contracts
+- Contracts are deterministic: same event + gate state always produces the same actions
+- Hard gates prevent progression when prerequisites are unmet (e.g., no PROPOSAL_SENT without review approval)
+- Blocked progressions produce ADD_NOTE contracts explaining the block
+- Contracts are stored as PENDING and applied externally (no direct CRM calls from router)
 - GHL actions execute (move_stage, trigger_workflow) based on allowlists
 - Dry-run mode logs actions without side effects
 - Telemetry records all action outcomes
 **Exit**: Project delivered; CRM updated
+
+#### Pipeline Stage Mapping
+| Event | Target Stage | Gate Required |
+|-------|-------------|---------------|
+| INTENT_RECEIVED | NEW_LEAD | — |
+| ACK_SENT | IN_REVIEW | — |
+| SAFETY_CHECK_COMPLETED | CLARIFICATION or IN_REVIEW | safetyCheck passed |
+| CLARIFICATION_SESSION_CREATED | CLARIFICATION | — |
+| REQUIREMENTS_VERSION_CREATED | REQUIREMENTS_REVIEW | — |
+| PROPOSAL_MARKED_SENT | PROPOSAL_SENT | proposal sent + review approved |
+| PROPOSAL_CLIENT_APPROVED | WON | proposal approved |
+| NOT_A_FIT | LOST | — |
 
 ---
 

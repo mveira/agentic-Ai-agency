@@ -1577,6 +1577,91 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
 
 ---
 
+## Pipeline Router — CRM Stage Mapping via Action Contracts
+
+### Task: Create pipeline stage config + event types + router + contract store (Steps 1–4)
+- **Status:** DONE
+- **Files touched:**
+  - packages/agent-core/src/pipeline/pipeline-stages.ts (CREATED)
+  - packages/agent-core/src/pipeline/pipeline-events.ts (CREATED)
+  - packages/agent-core/src/pipeline/pipeline-router.ts (CREATED)
+  - packages/agent-core/src/pipeline/pipeline-contract-store.ts (CREATED)
+  - packages/agent-core/src/pipeline/index.ts (CREATED)
+  - packages/agent-core/src/index.ts (MODIFIED — pipeline exports)
+- **Tests added/updated:**
+  - packages/agent-core/src/pipeline/pipeline-stages.test.ts (4 tests)
+  - packages/agent-core/src/pipeline/pipeline-events.test.ts (7 tests)
+  - packages/agent-core/src/pipeline/pipeline-router.test.ts (15 tests)
+  - packages/agent-core/src/pipeline/pipeline-contract-store.test.ts (8 tests)
+- **Commands run:**
+  - pnpm test — 726 tests pass (507 agent-core + 119 api + 15 dashboard + 38 auth + 25 telemetry + 22 prompt-library)
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - 7 pipeline stages: NEW_LEAD, IN_REVIEW, CLARIFICATION, REQUIREMENTS_REVIEW, PROPOSAL_SENT, WON, LOST
+  - 9 event types: INTENT_RECEIVED, ACK_SENT, SAFETY_CHECK_COMPLETED, CLARIFICATION_SESSION_CREATED, REQUIREMENTS_VERSION_CREATED, ASSUMPTIONS_ALL_APPROVED, PROPOSAL_MARKED_SENT, PROPOSAL_CLIENT_APPROVED, NOT_A_FIT
+  - Pure deterministic computeCrmActions() function with gate enforcement
+  - Hard gates block progression with ADD_NOTE explaining the block
+  - InMemoryCRMContractStore with insert/findByProject/updateStatus
+
+### Task: Add crmActionContracts DB table (Step 4)
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/db/schema.ts (MODIFIED — added crmContractStatusEnum, crmActionContracts table, type exports)
+- **Tests added/updated:**
+  - N/A (schema definition — tested via typecheck)
+- **Commands run:**
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - crmContractStatusEnum: PENDING, APPLIED, FAILED
+  - Table with uuid pk, project FK, contactId, actionType, payload (jsonb), status, reason, failureReason, createdAt
+
+### Task: Create CRM actions API routes (Step 5)
+- **Status:** DONE
+- **Files touched:**
+  - apps/api/src/routes/crm-actions.ts (CREATED)
+  - apps/api/src/index.ts (MODIFIED — mounted crmActionsRouter)
+- **Tests added/updated:**
+  - apps/api/src/routes/crm-actions.test.ts (5 tests)
+- **Commands run:**
+  - pnpm test — 119 API tests pass
+- **Notes / blockers:**
+  - GET /api/internal/projects/:projectId/crm-actions — list by project
+  - POST /api/internal/crm-actions/:id/apply — mark APPLIED
+  - POST /api/internal/crm-actions/:id/mark-failed — mark FAILED with reason
+
+### Task: Create CRM actions dashboard page (Step 6)
+- **Status:** DONE
+- **Files touched:**
+  - apps/dashboard/src/app/internal/projects/[id]/crm-actions/page.tsx (CREATED)
+- **Tests added/updated:**
+  - N/A (UI page, API tested separately)
+- **Commands run:**
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Client component with useEffect data fetching
+  - Shows pending actions with type, target stage, reason, status badge
+  - Matches existing inline styles pattern from ops page
+
+### Task: Documentation + barrel exports (Steps 7–8)
+- **Status:** DONE
+- **Files touched:**
+  - docs/features/pipeline-router.md (CREATED — full feature record)
+  - docs/system-handbook.md (MODIFIED — added pipeline mapping section to Stage 9)
+  - docs/index.md (MODIFIED — added Pipeline Router link)
+- **Tests added/updated:**
+  - N/A (documentation)
+- **Commands run:**
+  - pnpm test — 726 tests pass
+  - pnpm lint — clean
+  - pnpm typecheck — clean
+- **Notes / blockers:**
+  - Feature record follows template from docs/features/README.md
+  - System handbook updated with event→stage mapping table
+  - All pipeline types, schemas, router, store exported from agent-core index
+
+---
+
 ## High-Level Flow Contract
 
 ### Task: Create High-Level Flow JSON contract and next-steps enforcement plan

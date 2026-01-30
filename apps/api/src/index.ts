@@ -9,6 +9,7 @@ import { portalRouter, clarificationRouter, requirementsRouter, reviewsRouter } 
 import { requirementsV2Router } from './routes/requirements-v2.js';
 import { proposalRouter, publicProposalRouter } from './routes/proposals.js';
 import { internalPMRouter } from './routes/internal-pm.js';
+import { crmActionsRouter } from './routes/crm-actions.js';
 
 const app = new Hono();
 
@@ -38,6 +39,8 @@ app.route('/api/projects', requirementsV2Router);
 app.route('/api/projects', proposalRouter);
 app.route('/api/p', publicProposalRouter);
 app.route('/api/internal/projects', internalPMRouter);
+app.route('/api/internal/projects', crmActionsRouter);
+app.route('/api/internal', crmActionsRouter);
 
 // 404 handler
 app.notFound((c) => {

@@ -352,3 +352,27 @@ export type {
 // PM Engine (Step 6.0.1)
 export { PMEngine, withPMMetrics } from './pm-engine.js';
 export type { PMDataProvider, PMEngineConfig, PMComputeMetrics } from './pm-engine.js';
+
+// Pipeline Router
+export {
+  PipelineStageNameSchema,
+  PipelineStageConfigSchema,
+  PipelineEventType,
+  PipelineEventTypeSchema,
+  GateStateSnapshotSchema,
+  PipelineRouterInputSchema,
+  computeCrmActions,
+  CRMContractStatusSchema,
+  CRMActionContractRecordSchema,
+  InMemoryCRMContractStore,
+} from './pipeline/index.js';
+export type {
+  PipelineStageName,
+  PipelineStageConfig,
+  GateStateSnapshot,
+  PipelineRouterInput,
+  CRMActionContract,
+  CRMContractStatus,
+  CRMActionContractRecord,
+  CRMContractStore,
+} from './pipeline/index.js';

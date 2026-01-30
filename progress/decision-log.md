@@ -94,6 +94,52 @@ Use this format for all architectural and technical decisions:
 
 ---
 
+## Pipeline Router — CRM Stage Mapping
+
+### Decision: Pipeline router in agent-core subfolder (not a new package)
+- **Date:** 2026-01-29
+- **Context:** Pipeline router logic needs a home — could be a new package or a subfolder in agent-core
+- **Decision:** Place in `packages/agent-core/src/pipeline/` as a new subfolder with barrel export
+- **Reason:** Consistent with existing patterns (build-orchestrator, PM engine already live in agent-core). Avoids package proliferation for a focused feature.
+- **Alternatives considered:**
+  - New `@agency/pipeline` package (more setup, unnecessary isolation for tightly coupled logic)
+  - Flat files in agent-core root (would further crowd the src/ directory)
+- **Impact:**
+  - Clean subfolder with its own index.ts barrel
+  - All exports re-exported from main agent-core index.ts
+- **Status:** Approved
+
+### Decision: Contracts-only CRM action pattern (no direct CRM calls)
+- **Date:** 2026-01-29
+- **Context:** Pipeline router needs to map events to CRM actions, but spec forbids direct CRM calls
+- **Decision:** Router emits CRMActionContract objects stored as PENDING. Separate process applies them. Router never calls GHL.
+- **Reason:** Decouples stage-mapping logic from CRM execution; enables audit trail; supports dry-run and retry patterns
+- **Alternatives considered:**
+  - Direct GHL calls from router (rejected — violates spec, no audit trail, harder to test)
+  - Event bus integration (deferred — contracts are the intermediate step before event-driven execution)
+- **Impact:**
+  - All CRM actions are auditable PENDING records
+  - Apply/fail lifecycle managed via API endpoints
+  - Zero CRM dependency in router logic
+- **Status:** Approved
+
+### Decision: Hard gates return ADD_NOTE instead of throwing
+- **Date:** 2026-01-29
+- **Context:** When gate prerequisites aren't met (e.g., proposal not sent, review not approved), router must handle gracefully
+- **Decision:** Return ADD_NOTE contracts explaining the block rather than throwing errors or returning empty arrays
+- **Reason:** Every router invocation produces a contract — either a MOVE_STAGE or an ADD_NOTE explaining why progression was blocked. This ensures full audit trail.
+- **Alternatives considered:**
+  - Throw errors (caller must handle, no audit trail)
+  - Return empty array (silent failure, no explanation)
+  - Return a separate BlockedResult type (adds complexity to caller)
+- **Impact:**
+  - Every event always produces at least one contract
+  - Blocked progressions are visible in the contract store
+  - Operators can see exactly why a stage move didn't happen
+- **Status:** Approved
+
+---
+
 ## Step 4 – Requirements + Assumptions Loop
 
 ### Decision: New route file for project-scoped requirements endpoints

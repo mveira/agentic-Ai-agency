@@ -306,6 +306,32 @@ export const proposalActions = pgTable('proposal_actions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+/**
+ * CRM action contract status enum.
+ */
+export const crmContractStatusEnum = pgEnum('crm_contract_status', [
+  'PENDING',
+  'APPLIED',
+  'FAILED',
+]);
+
+/**
+ * CRM action contracts table — pending CRM actions produced by the pipeline router.
+ */
+export const crmActionContracts = pgTable('crm_action_contracts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  projectId: uuid('project_id')
+    .references(() => projects.id)
+    .notNull(),
+  contactId: varchar('contact_id', { length: 255 }).notNull(),
+  actionType: varchar('action_type', { length: 50 }).notNull(),
+  payload: jsonb('payload').notNull(),
+  status: crmContractStatusEnum('status').notNull().default('PENDING'),
+  reason: text('reason').notNull(),
+  failureReason: text('failure_reason'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Type exports for use in application code
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
@@ -325,3 +351,5 @@ export type ProposalReview = typeof proposalReviews.$inferSelect;
 export type NewProposalReview = typeof proposalReviews.$inferInsert;
 export type ProposalAction = typeof proposalActions.$inferSelect;
 export type NewProposalAction = typeof proposalActions.$inferInsert;
+export type CRMActionContractRow = typeof crmActionContracts.$inferSelect;
+export type NewCRMActionContractRow = typeof crmActionContracts.$inferInsert;

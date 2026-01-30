@@ -38,6 +38,7 @@ End-to-end feature flows with triggers, agents, approval points, and failure han
 - [Requirements & Assumptions](features/requirements-and-assumptions.md)
 - [Assumptions Approval](features/assumptions-approval.md)
 - [Build Pipeline](features/proposal-generation.md)
+- [Pipeline Router](features/pipeline-router.md)
 
 ## Knowledge
 
