@@ -12,26 +12,24 @@ export type {
 export {
   PipelineEventType,
   PipelineEventTypeSchema,
-  GateStateSnapshotSchema,
   PipelineRouterInputSchema,
 } from './pipeline-events.js';
 export type {
-  GateStateSnapshot,
   PipelineRouterInput,
 } from './pipeline-events.js';
 
 // Pipeline Router
-export { computeCrmActions } from './pipeline-router.js';
-export type { CRMActionContract } from './pipeline-router.js';
+export { computePipelineAction, PipelineActionContractSchema } from './pipeline-router.js';
+export type { PipelineActionContract } from './pipeline-router.js';
 
 // Pipeline Contract Store
 export {
-  CRMContractStatusSchema,
-  CRMActionContractRecordSchema,
-  InMemoryCRMContractStore,
+  PipelineContractStatusSchema,
+  StoredPipelineContractSchema,
+  InMemoryPipelineContractStore,
 } from './pipeline-contract-store.js';
 export type {
-  CRMContractStatus,
-  CRMActionContractRecord,
-  CRMContractStore,
+  PipelineContractStatus,
+  StoredPipelineContract,
+  PipelineContractStore,
 } from './pipeline-contract-store.js';

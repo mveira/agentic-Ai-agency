@@ -107,10 +107,13 @@ export class AgentRunner {
           success: false,
           error: budgetResult.reason,
           telemetry: {
-            inputTokens: 0,
-            outputTokens: 0,
+            tokensIn: 0,
+            tokensOut: 0,
+            latencyMs: 0,
+            requestId: '',
             cost: 0,
             model: this.config.defaultModel,
+            isDryRun: false,
           },
         };
       }
@@ -144,22 +147,25 @@ export class AgentRunner {
         success: false,
         error: errorMessage,
         telemetry: {
-          inputTokens: 0,
-          outputTokens: 0,
+          tokensIn: 0,
+          tokensOut: 0,
+          latencyMs: 0,
+          requestId: '',
           cost: 0,
           model: this.config.defaultModel,
+          isDryRun: false,
         },
       };
     }
 
     // Validate output schema
-    const validation = validateAgentOutput(llmResult.content);
+    const validation = validateAgentOutput(llmResult.text);
 
     // Calculate cost
     const costEstimate = estimateCost({
       modelId: llmResult.model,
-      inputTokens: llmResult.inputTokens,
-      outputTokens: llmResult.outputTokens,
+      inputTokens: llmResult.tokensIn,
+      outputTokens: llmResult.tokensOut,
     });
 
     // Record telemetry
@@ -169,8 +175,8 @@ export class AgentRunner {
       taskType: task.taskType,
       model: llmResult.model,
       promptHash: compiledPrompt.hash,
-      inputTokens: llmResult.inputTokens,
-      outputTokens: llmResult.outputTokens,
+      inputTokens: llmResult.tokensIn,
+      outputTokens: llmResult.tokensOut,
       status: validation.valid ? 'completed' : 'failed',
       metadata: validation.valid ? undefined : { validationError: validation.error },
       store: this.telemetryStore,
@@ -181,10 +187,13 @@ export class AgentRunner {
         success: false,
         error: `Output validation failed: ${validation.error}`,
         telemetry: {
-          inputTokens: llmResult.inputTokens,
-          outputTokens: llmResult.outputTokens,
+          tokensIn: llmResult.tokensIn,
+          tokensOut: llmResult.tokensOut,
+          latencyMs: llmResult.latencyMs,
+          requestId: llmResult.requestId,
           cost: costEstimate.totalCost,
           model: llmResult.model,
+          isDryRun: llmResult.isDryRun,
         },
       };
     }
@@ -193,10 +202,13 @@ export class AgentRunner {
       success: true,
       output: validation.output as AgentOutput,
       telemetry: {
-        inputTokens: llmResult.inputTokens,
-        outputTokens: llmResult.outputTokens,
+        tokensIn: llmResult.tokensIn,
+        tokensOut: llmResult.tokensOut,
+        latencyMs: llmResult.latencyMs,
+        requestId: llmResult.requestId,
         cost: costEstimate.totalCost,
         model: llmResult.model,
+        isDryRun: llmResult.isDryRun,
       },
     };
   }

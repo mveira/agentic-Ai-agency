@@ -245,8 +245,8 @@ export const BuildPlanSchema = z.object({
       step: z.string(),
       agentId: z.string(),
       durationMs: z.number(),
-      inputTokens: z.number(),
-      outputTokens: z.number(),
+      tokensIn: z.number(),
+      tokensOut: z.number(),
       cost: z.number(),
       model: z.string(),
     })

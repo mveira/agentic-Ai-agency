@@ -41,8 +41,8 @@ export interface TelemetryEntry {
   step: string;
   agentId: string;
   durationMs: number;
-  inputTokens: number;
-  outputTokens: number;
+  tokensIn: number;
+  tokensOut: number;
   cost: number;
   model: string;
 }
@@ -328,8 +328,8 @@ export class BuildOrchestrator {
       step: step.stepName,
       agentId: step.agentId,
       durationMs,
-      inputTokens: result.telemetry.inputTokens,
-      outputTokens: result.telemetry.outputTokens,
+      tokensIn: result.telemetry.tokensIn,
+      tokensOut: result.telemetry.tokensOut,
       cost: result.telemetry.cost,
       model: result.routedModel,
     });

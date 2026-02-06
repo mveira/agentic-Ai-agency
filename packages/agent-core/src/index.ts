@@ -36,6 +36,16 @@ export type { CompiledPrompt, CompilePromptParams } from './prompt-compiler.js';
 // Mock LLM
 export { MockLLMAdapter, createMockAdapter } from './mock-llm.js';
 
+// Real LLM Adapters
+export {
+  ClaudeAdapter,
+  createClaudeAdapterFromEnv,
+  ClaudeAPIError,
+  ClaudeRateLimitError,
+  ClaudeTimeoutError,
+} from './llm-adapters/index.js';
+export type { ClaudeAdapterConfig } from './llm-adapters/index.js';
+
 // Agent Runner
 export { AgentRunner } from './agent-runner.js';
 export type { RunTaskParams } from './agent-runner.js';
@@ -359,20 +369,19 @@ export {
   PipelineStageConfigSchema,
   PipelineEventType,
   PipelineEventTypeSchema,
-  GateStateSnapshotSchema,
   PipelineRouterInputSchema,
-  computeCrmActions,
-  CRMContractStatusSchema,
-  CRMActionContractRecordSchema,
-  InMemoryCRMContractStore,
+  computePipelineAction,
+  PipelineActionContractSchema,
+  PipelineContractStatusSchema,
+  StoredPipelineContractSchema,
+  InMemoryPipelineContractStore,
 } from './pipeline/index.js';
 export type {
   PipelineStageName,
   PipelineStageConfig,
-  GateStateSnapshot,
   PipelineRouterInput,
-  CRMActionContract,
-  CRMContractStatus,
-  CRMActionContractRecord,
-  CRMContractStore,
+  PipelineActionContract,
+  PipelineContractStatus,
+  StoredPipelineContract,
+  PipelineContractStore,
 } from './pipeline/index.js';

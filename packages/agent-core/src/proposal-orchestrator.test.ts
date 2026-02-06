@@ -303,8 +303,8 @@ describe('ProposalOrchestrator', () => {
     for (const entry of result.telemetry) {
       expect(entry.agentId).toBeDefined();
       expect(entry.durationMs).toBeGreaterThanOrEqual(0);
-      expect(entry.inputTokens).toBeGreaterThanOrEqual(0);
-      expect(entry.outputTokens).toBeGreaterThanOrEqual(0);
+      expect(entry.tokensIn).toBeGreaterThanOrEqual(0);
+      expect(entry.tokensOut).toBeGreaterThanOrEqual(0);
       expect(typeof entry.cost).toBe('number');
       expect(entry.model).toBeDefined();
     }

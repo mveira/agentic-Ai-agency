@@ -82,13 +82,29 @@ export interface LLMCompletionParams {
   prompt: string;
   maxTokens: number;
   model: string;
+  /** If true, adapter skips real API call and returns mock response */
+  dryRun?: boolean;
 }
 
+/**
+ * LLM completion result with full telemetry.
+ * All adapters must return this structure.
+ */
 export interface LLMCompletionResult {
-  content: string;
-  inputTokens: number;
-  outputTokens: number;
+  /** The generated text response */
+  text: string;
+  /** Input tokens consumed */
+  tokensIn: number;
+  /** Output tokens generated */
+  tokensOut: number;
+  /** Request latency in milliseconds */
+  latencyMs: number;
+  /** Provider-assigned request ID for tracing */
+  requestId: string;
+  /** Model used for completion */
   model: string;
+  /** Whether this was a dry-run (no real API call) */
+  isDryRun: boolean;
 }
 
 /**
@@ -99,10 +115,13 @@ export interface AgentRunResult {
   output?: AgentOutput;
   error?: string;
   telemetry: {
-    inputTokens: number;
-    outputTokens: number;
+    tokensIn: number;
+    tokensOut: number;
+    latencyMs: number;
+    requestId: string;
     cost: number;
     model: string;
+    isDryRun: boolean;
   };
 }
 

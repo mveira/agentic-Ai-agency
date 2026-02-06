@@ -57,7 +57,7 @@ describe('AgentRunner', () => {
 
     expect(result.success).toBe(true);
     expect(result.output).toBeDefined();
-    expect(result.telemetry.inputTokens).toBeGreaterThan(0);
+    expect(result.telemetry.tokensIn).toBeGreaterThan(0);
     expect(result.telemetry.model).toBe('mock');
   });
 

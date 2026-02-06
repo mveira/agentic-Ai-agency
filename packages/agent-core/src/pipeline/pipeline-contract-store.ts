@@ -1,53 +1,77 @@
 import { z } from 'zod';
+import type { PipelineActionContract } from './pipeline-router.js';
 
-// ─── CRM Action Contract Record ─────────────────────────────────────────────
+// ─── Pipeline Contract Status ────────────────────────────────────────────────
 
-export const CRMContractStatusSchema = z.enum(['PENDING', 'APPLIED', 'FAILED']);
-export type CRMContractStatus = z.infer<typeof CRMContractStatusSchema>;
+export const PipelineContractStatusSchema = z.enum(['PENDING', 'APPLIED', 'REJECTED']);
+export type PipelineContractStatus = z.infer<typeof PipelineContractStatusSchema>;
 
-export const CRMActionContractRecordSchema = z.object({
-  id: z.string().uuid(),
+// ─── Stored Contract Record ──────────────────────────────────────────────────
+
+export const StoredPipelineContractSchema = z.object({
+  contractId: z.string().uuid(),
   projectId: z.string(),
-  contactId: z.string(),
-  actionType: z.enum(['MOVE_STAGE', 'TRIGGER_WORKFLOW', 'ADD_NOTE']),
-  payload: z.record(z.unknown()),
-  status: CRMContractStatusSchema,
-  reason: z.string(),
+  targetStage: z.string(),
+  actionType: z.literal('MOVE_STAGE'),
+  humanReadableNote: z.string(),
+  internalReason: z.object({
+    eventType: z.string(),
+    eventId: z.string(),
+    relatedIds: z.record(z.string()).optional(),
+  }),
+  idempotencyKey: z.string(),
+  status: PipelineContractStatusSchema,
   createdAt: z.string(),
 });
 
-export type CRMActionContractRecord = z.infer<typeof CRMActionContractRecordSchema>;
+export type StoredPipelineContract = z.infer<typeof StoredPipelineContractSchema>;
 
-// ─── CRM Contract Store Interface ───────────────────────────────────────────
+// ─── Pipeline Contract Store Interface ───────────────────────────────────────
 
-export interface CRMContractStore {
-  insert(record: CRMActionContractRecord): void;
-  findByProject(projectId: string): CRMActionContractRecord[];
-  updateStatus(id: string, status: CRMContractStatus, failureReason?: string): void;
+export interface PipelineContractStore {
+  insert(contract: PipelineActionContract): StoredPipelineContract;
+  hasIdempotencyKey(key: string): boolean;
+  findByProject(projectId: string): StoredPipelineContract[];
+  updateStatus(contractId: string, status: PipelineContractStatus): void;
 }
 
 // ─── In-Memory Implementation ───────────────────────────────────────────────
 
-export class InMemoryCRMContractStore implements CRMContractStore {
-  private records = new Map<string, CRMActionContractRecord>();
+export class InMemoryPipelineContractStore implements PipelineContractStore {
+  private records = new Map<string, StoredPipelineContract>();
+  private idempotencyKeys = new Set<string>();
 
-  insert(record: CRMActionContractRecord): void {
-    this.records.set(record.id, structuredClone(record));
+  insert(contract: PipelineActionContract): StoredPipelineContract {
+    if (this.idempotencyKeys.has(contract.idempotencyKey)) {
+      throw new Error(`Duplicate idempotency key: ${contract.idempotencyKey}`);
+    }
+    const stored: StoredPipelineContract = {
+      ...structuredClone(contract),
+      status: 'PENDING',
+    };
+    this.records.set(stored.contractId, stored);
+    this.idempotencyKeys.add(contract.idempotencyKey);
+    return structuredClone(stored);
   }
 
-  findByProject(projectId: string): CRMActionContractRecord[] {
+  hasIdempotencyKey(key: string): boolean {
+    return this.idempotencyKeys.has(key);
+  }
+
+  findByProject(projectId: string): StoredPipelineContract[] {
     return [...this.records.values()]
       .filter((r) => r.projectId === projectId)
       .map((r) => structuredClone(r));
   }
 
-  updateStatus(id: string, status: CRMContractStatus, _failureReason?: string): void {
-    const record = this.records.get(id);
+  updateStatus(contractId: string, status: PipelineContractStatus): void {
+    const record = this.records.get(contractId);
     if (!record) return;
     record.status = status;
   }
 
   clear(): void {
     this.records.clear();
+    this.idempotencyKeys.clear();
   }
 }

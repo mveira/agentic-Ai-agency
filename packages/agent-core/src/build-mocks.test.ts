@@ -79,7 +79,7 @@ describe('registerBuildMocks', () => {
       maxTokens: 4096,
       model: 'mock',
     });
-    const parsed = JSON.parse(blueprintResult.content);
+    const parsed = JSON.parse(blueprintResult.text);
     expect(parsed.result.goal).toBeDefined();
     expect(parsed.result.funnelSteps).toBeDefined();
 
@@ -88,7 +88,7 @@ describe('registerBuildMocks', () => {
       maxTokens: 4096,
       model: 'mock',
     });
-    const uxParsed = JSON.parse(uxResult.content);
+    const uxParsed = JSON.parse(uxResult.text);
     expect(uxParsed.result.routes).toBeDefined();
     expect(uxParsed.result.screens).toBeDefined();
   });

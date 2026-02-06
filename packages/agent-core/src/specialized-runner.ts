@@ -279,10 +279,13 @@ export class SpecializedAgentRunner {
       routedModel: 'none',
       downgraded: false,
       telemetry: {
-        inputTokens: 0,
-        outputTokens: 0,
+        tokensIn: 0,
+        tokensOut: 0,
+        latencyMs: 0,
+        requestId: '',
         cost: 0,
         model: 'none',
+        isDryRun: false,
       },
     };
   }

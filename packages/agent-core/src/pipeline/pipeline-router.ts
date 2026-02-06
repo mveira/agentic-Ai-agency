@@ -1,79 +1,99 @@
+import { z } from 'zod';
 import type { PipelineRouterInput } from './pipeline-events.js';
-import type { PipelineStageName } from './pipeline-stages.js';
+import { PipelineStageNameSchema, type PipelineStageName } from './pipeline-stages.js';
 
-// ─── CRM Action Contract ────────────────────────────────────────────────────
+// ─── Pipeline Action Contract ────────────────────────────────────────────────
 
-export interface CRMActionContract {
-  type: 'MOVE_STAGE' | 'TRIGGER_WORKFLOW' | 'ADD_NOTE';
-  targetStage?: PipelineStageName;
-  workflowId?: string;
-  note?: string;
-  reason: string;
+export const PipelineActionContractSchema = z.object({
+  contractId: z.string().uuid(),
+  projectId: z.string(),
+  targetStage: PipelineStageNameSchema,
+  actionType: z.literal('MOVE_STAGE'),
+  humanReadableNote: z.string(),
+  internalReason: z.object({
+    eventType: z.string(),
+    eventId: z.string(),
+    relatedIds: z.record(z.string()).optional(),
+  }),
+  idempotencyKey: z.string(),
+  createdAt: z.string(),
+});
+
+export type PipelineActionContract = z.infer<typeof PipelineActionContractSchema>;
+
+// ─── Stage-Moving Event Map ──────────────────────────────────────────────────
+// Only these events produce contracts. All others are silently ignored.
+
+interface StageMapping {
+  targetStage: PipelineStageName;
+  humanReadableNote: string;
 }
+
+const STAGE_MAPPINGS: Record<string, StageMapping> = {
+  INTENT_RECEIVED: {
+    targetStage: 'NEW_LEAD',
+    humanReadableNote: 'New enquiry received and logged.',
+  },
+  ACK_SENT: {
+    targetStage: 'IN_REVIEW',
+    humanReadableNote: 'Acknowledgement sent — reviewing your information.',
+  },
+  CLARIFICATION_SESSION_CREATED: {
+    targetStage: 'CLARIFICATION',
+    humanReadableNote: 'We\'re asking a few focused questions to better understand your needs.',
+  },
+  REQUIREMENTS_VERSION_CREATED: {
+    targetStage: 'REQUIREMENTS_REVIEW',
+    humanReadableNote: 'Draft requirements prepared for your review.',
+  },
+  PROPOSAL_MARKED_SENT: {
+    targetStage: 'PROPOSAL_SENT',
+    humanReadableNote: 'Proposal prepared and sent.',
+  },
+  PROPOSAL_CLIENT_APPROVED: {
+    targetStage: 'WON',
+    humanReadableNote: 'Proposal approved — moving forward.',
+  },
+  MARK_LOST: {
+    targetStage: 'LOST',
+    humanReadableNote: 'Not the right fit at this time.',
+  },
+  NOT_A_FIT: {
+    targetStage: 'LOST',
+    humanReadableNote: 'Not the right fit at this time.',
+  },
+};
 
 // ─── Pipeline Router (Pure, Deterministic) ───────────────────────────────────
 
-export function computeCrmActions(input: PipelineRouterInput): CRMActionContract[] {
-  const { triggeringEvent, gateState } = input;
-
-  switch (triggeringEvent) {
-    case 'INTENT_RECEIVED':
-      return [{ type: 'MOVE_STAGE', targetStage: 'NEW_LEAD', reason: 'New lead intent received' }];
-
-    case 'ACK_SENT':
-      return [{ type: 'MOVE_STAGE', targetStage: 'IN_REVIEW', reason: 'Acknowledgement sent to lead' }];
-
-    case 'SAFETY_CHECK_COMPLETED': {
-      if (gateState.safetyCheck !== 'passed') {
-        return [{ type: 'ADD_NOTE', note: `Safety check did not pass (status: ${gateState.safetyCheck})`, reason: 'Safety check gate not passed' }];
-      }
-      if (gateState.clarification === 'needed') {
-        return [{ type: 'MOVE_STAGE', targetStage: 'CLARIFICATION', reason: 'Safety check passed; clarification needed' }];
-      }
-      return [{ type: 'MOVE_STAGE', targetStage: 'IN_REVIEW', reason: 'Safety check passed; no clarification needed' }];
-    }
-
-    case 'CLARIFICATION_SESSION_CREATED':
-      return [{ type: 'MOVE_STAGE', targetStage: 'CLARIFICATION', reason: 'Clarification session created' }];
-
-    case 'REQUIREMENTS_VERSION_CREATED':
-      return [{ type: 'MOVE_STAGE', targetStage: 'REQUIREMENTS_REVIEW', reason: 'Requirements version created for review' }];
-
-    case 'ASSUMPTIONS_ALL_APPROVED': {
-      if (gateState.assumptions !== 'all_approved') {
-        return [{ type: 'ADD_NOTE', note: `Cannot advance: assumptions not all approved (status: ${gateState.assumptions})`, reason: 'Assumptions gate not met' }];
-      }
-      return [{ type: 'ADD_NOTE', note: 'All assumptions approved — ready for proposal generation', reason: 'Assumptions approval milestone reached' }];
-    }
-
-    case 'PROPOSAL_MARKED_SENT': {
-      if (gateState.proposal !== 'sent') {
-        return [{ type: 'ADD_NOTE', note: `Cannot move to PROPOSAL_SENT: proposal status is ${gateState.proposal}, expected 'sent'`, reason: 'Proposal sent gate not met' }];
-      }
-      if (gateState.proposalReview !== 'approved') {
-        return [{ type: 'ADD_NOTE', note: `Cannot move to PROPOSAL_SENT: proposal review is ${gateState.proposalReview}, expected 'approved'`, reason: 'Proposal review gate not met' }];
-      }
-      return [{ type: 'MOVE_STAGE', targetStage: 'PROPOSAL_SENT', reason: 'Proposal marked as sent after review approval' }];
-    }
-
-    case 'PROPOSAL_CLIENT_APPROVED': {
-      if (gateState.proposal !== 'approved') {
-        return [{ type: 'ADD_NOTE', note: `Cannot move to WON: proposal status is ${gateState.proposal}, expected 'approved'`, reason: 'Proposal approval gate not met' }];
-      }
-      return [{ type: 'MOVE_STAGE', targetStage: 'WON', reason: 'Client approved the proposal' }];
-    }
-
-    case 'NOT_A_FIT': {
-      const note = gateState.fitDecision === 'not_a_fit'
-        ? 'Marked as not a fit during review'
-        : 'Not-a-fit event triggered';
-      return [
-        { type: 'MOVE_STAGE', targetStage: 'LOST', reason: 'Project determined to be not a fit' },
-        { type: 'ADD_NOTE', note, reason: 'Not-a-fit decision recorded' },
-      ];
-    }
-
-    default:
-      return [{ type: 'ADD_NOTE', note: `Unknown event: ${triggeringEvent}`, reason: 'Unrecognized triggering event' }];
+/**
+ * Computes a PipelineActionContract from a router input, or returns null
+ * if the event does not produce a stage move.
+ *
+ * Rules:
+ * - Only explicit stage-moving events produce contracts
+ * - SAFETY_CHECK_COMPLETED, REQUIREMENTS_CONFIRMED, ASSUMPTIONS_APPROVED_ALL
+ *   do NOT move stages
+ * - Every contract includes humanReadableNote + internalReason + idempotencyKey
+ */
+export function computePipelineAction(input: PipelineRouterInput): PipelineActionContract | null {
+  const mapping = STAGE_MAPPINGS[input.triggeringEvent];
+  if (!mapping) {
+    return null;
   }
+
+  return {
+    contractId: crypto.randomUUID(),
+    projectId: input.projectId,
+    targetStage: mapping.targetStage,
+    actionType: 'MOVE_STAGE',
+    humanReadableNote: mapping.humanReadableNote,
+    internalReason: {
+      eventType: input.triggeringEvent,
+      eventId: input.eventId,
+      relatedIds: input.relatedIds,
+    },
+    idempotencyKey: `${input.eventId}:MOVE_STAGE`,
+    createdAt: new Date().toISOString(),
+  };
 }

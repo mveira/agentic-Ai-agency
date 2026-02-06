@@ -94,7 +94,35 @@ Use this format for all architectural and technical decisions:
 
 ---
 
-## Pipeline Router — CRM Stage Mapping
+## Pipeline Router v2 — Consent-Driven Stage Mapping
+
+### Decision: Remove gate state checking — explicit events only
+- **Date:** 2026-01-30
+- **Context:** v1 used GateStateSnapshot to conditionally block stage moves. v2 spec requires that stage changes ONLY occur on explicit events — no gate checking.
+- **Decision:** Remove GateStateSnapshot entirely. Router maps events directly to stages. Non-stage-moving events (SAFETY_CHECK_COMPLETED, REQUIREMENTS_CONFIRMED, ASSUMPTIONS_APPROVED_ALL) return null.
+- **Reason:** Consent-driven design — safety checks and analysis alone should never move stages. Only explicit creation/approval events advance the pipeline. Simpler, more predictable, more auditable.
+- **Alternatives considered:**
+  - Keep gates as optional validation layer (rejected — adds complexity, spec explicitly forbids gate-based advancement)
+  - Return ADD_NOTE for non-moving events (rejected — v2 spec says no contract, just null)
+- **Impact:**
+  - No GateStateSnapshot schema or type
+  - computePipelineAction returns PipelineActionContract | null (not array)
+  - Non-stage-moving events silently produce nothing
+- **Status:** Approved
+
+### Decision: PipelineActionContract with humanReadableNote + internalReason + idempotencyKey
+- **Date:** 2026-01-30
+- **Context:** v1 had generic CRMActionContract with just `reason`. v2 requires human-facing clarity, audit trail, and duplicate prevention.
+- **Decision:** Redesign contract schema: contractId (UUID), targetStage, humanReadableNote (plain English for clients), internalReason (eventType + eventId + relatedIds), idempotencyKey (eventId:MOVE_STAGE).
+- **Reason:** Human clarity is non-negotiable. Every stage move must be explainable to a client in plain English. Internal reason provides full traceability. Idempotency key prevents duplicate processing.
+- **Alternatives considered:**
+  - Keep v1 schema with added fields (rejected — fundamental schema change, cleaner to redesign)
+  - Separate human/machine notes in different stores (rejected — single contract is simpler to audit)
+- **Impact:**
+  - Every contract carries both human-facing and machine-facing information
+  - Store enforces unique idempotencyKey — duplicate events throw
+  - Status lifecycle: PENDING → APPLIED | REJECTED (FAILED removed, REJECTED added)
+- **Status:** Approved
 
 ### Decision: Pipeline router in agent-core subfolder (not a new package)
 - **Date:** 2026-01-29
@@ -107,35 +135,6 @@ Use this format for all architectural and technical decisions:
 - **Impact:**
   - Clean subfolder with its own index.ts barrel
   - All exports re-exported from main agent-core index.ts
-- **Status:** Approved
-
-### Decision: Contracts-only CRM action pattern (no direct CRM calls)
-- **Date:** 2026-01-29
-- **Context:** Pipeline router needs to map events to CRM actions, but spec forbids direct CRM calls
-- **Decision:** Router emits CRMActionContract objects stored as PENDING. Separate process applies them. Router never calls GHL.
-- **Reason:** Decouples stage-mapping logic from CRM execution; enables audit trail; supports dry-run and retry patterns
-- **Alternatives considered:**
-  - Direct GHL calls from router (rejected — violates spec, no audit trail, harder to test)
-  - Event bus integration (deferred — contracts are the intermediate step before event-driven execution)
-- **Impact:**
-  - All CRM actions are auditable PENDING records
-  - Apply/fail lifecycle managed via API endpoints
-  - Zero CRM dependency in router logic
-- **Status:** Approved
-
-### Decision: Hard gates return ADD_NOTE instead of throwing
-- **Date:** 2026-01-29
-- **Context:** When gate prerequisites aren't met (e.g., proposal not sent, review not approved), router must handle gracefully
-- **Decision:** Return ADD_NOTE contracts explaining the block rather than throwing errors or returning empty arrays
-- **Reason:** Every router invocation produces a contract — either a MOVE_STAGE or an ADD_NOTE explaining why progression was blocked. This ensures full audit trail.
-- **Alternatives considered:**
-  - Throw errors (caller must handle, no audit trail)
-  - Return empty array (silent failure, no explanation)
-  - Return a separate BlockedResult type (adds complexity to caller)
-- **Impact:**
-  - Every event always produces at least one contract
-  - Blocked progressions are visible in the contract store
-  - Operators can see exactly why a stage move didn't happen
 - **Status:** Approved
 
 ---

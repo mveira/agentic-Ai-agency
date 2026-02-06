@@ -1,19 +1,19 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { InMemoryCRMContractStore } from '@agency/agent-core';
+import { InMemoryPipelineContractStore } from '@agency/agent-core';
 
-const store = new InMemoryCRMContractStore();
+const store = new InMemoryPipelineContractStore();
 
-export { store as crmContractStore };
+export { store as pipelineContractStore };
 
 export const crmActionsRouter = new Hono();
 
 // GET /api/internal/projects/:projectId/crm-actions — list by project
 crmActionsRouter.get('/:projectId/crm-actions', async (c) => {
   const projectId = c.req.param('projectId');
-  const records = store.findByProject(projectId);
-  return c.json({ actions: records });
+  const contracts = store.findByProject(projectId);
+  return c.json({ actions: contracts });
 });
 
 // POST /api/internal/crm-actions/:id/apply — mark APPLIED
@@ -26,14 +26,14 @@ crmActionsRouter.post(
   },
 );
 
-// POST /api/internal/crm-actions/:id/mark-failed — mark FAILED with reason
+// POST /api/internal/crm-actions/:id/reject — mark REJECTED with reason
 crmActionsRouter.post(
-  '/crm-actions/:id/mark-failed',
+  '/crm-actions/:id/reject',
   zValidator('json', z.object({ reason: z.string() })),
   async (c) => {
     const id = c.req.param('id');
     const { reason } = c.req.valid('json');
-    store.updateStatus(id, 'FAILED', reason);
-    return c.json({ success: true, id, status: 'FAILED', reason });
+    store.updateStatus(id, 'REJECTED');
+    return c.json({ success: true, id, status: 'REJECTED', reason });
   },
 );

@@ -7,14 +7,19 @@ interface Props {
   params: { id: string };
 }
 
-interface CRMAction {
-  id: string;
+interface PipelineContract {
+  contractId: string;
   projectId: string;
-  contactId: string;
+  targetStage: string;
   actionType: string;
-  payload: Record<string, unknown>;
-  status: 'PENDING' | 'APPLIED' | 'FAILED';
-  reason: string;
+  humanReadableNote: string;
+  internalReason: {
+    eventType: string;
+    eventId: string;
+    relatedIds?: Record<string, string>;
+  };
+  idempotencyKey: string;
+  status: 'PENDING' | 'APPLIED' | 'REJECTED';
   createdAt: string;
 }
 
@@ -23,18 +28,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const STATUS_COLORS: Record<string, string> = {
   PENDING: '#f59e0b',
   APPLIED: '#22c55e',
-  FAILED: '#ef4444',
-};
-
-const ACTION_TYPE_LABELS: Record<string, string> = {
-  MOVE_STAGE: 'Move Stage',
-  TRIGGER_WORKFLOW: 'Trigger Workflow',
-  ADD_NOTE: 'Add Note',
+  REJECTED: '#ef4444',
 };
 
 export default function CRMActionsPage({ params }: Props) {
   const projectId = params.id;
-  const [actions, setActions] = useState<CRMAction[]>([]);
+  const [contracts, setContracts] = useState<PipelineContract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +45,7 @@ export default function CRMActionsPage({ params }: Props) {
         const res = await fetch(`${API_BASE}/api/internal/projects/${projectId}/crm-actions`);
         if (res.ok) {
           const data = await res.json();
-          setActions(data.actions ?? []);
+          setContracts(data.actions ?? []);
         } else {
           setError(`Failed to load: ${res.status}`);
         }
@@ -69,23 +68,23 @@ export default function CRMActionsPage({ params }: Props) {
       </nav>
 
       <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-        CRM Action Contracts
+        Pipeline Action Contracts
       </h1>
       <p style={{ color: '#666', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-        Pending CRM actions produced by the pipeline router — agency only
+        Stage-move contracts emitted by the pipeline router — manual apply during pilot
       </p>
 
       {loading && <p style={{ color: '#888' }}>Loading...</p>}
       {error && <p style={{ color: '#ef4444' }}>Error: {error}</p>}
 
-      {!loading && !error && actions.length === 0 && (
-        <p style={{ color: '#888', fontSize: '0.875rem' }}>No CRM action contracts found.</p>
+      {!loading && !error && contracts.length === 0 && (
+        <p style={{ color: '#888', fontSize: '0.875rem' }}>No pipeline action contracts found.</p>
       )}
 
-      {!loading && !error && actions.length > 0 && (
+      {!loading && !error && contracts.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {actions.map((action) => (
-            <section key={action.id} style={sectionStyle}>
+          {contracts.map((contract) => (
+            <section key={contract.contractId} style={sectionStyle}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
                 <span style={{
                   display: 'inline-block',
@@ -94,24 +93,25 @@ export default function CRMActionsPage({ params }: Props) {
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   color: '#fff',
-                  backgroundColor: STATUS_COLORS[action.status] ?? '#6b7280',
+                  backgroundColor: STATUS_COLORS[contract.status] ?? '#6b7280',
                 }}>
-                  {action.status}
+                  {contract.status}
                 </span>
                 <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                  {ACTION_TYPE_LABELS[action.actionType] ?? action.actionType}
+                  MOVE_STAGE
                 </span>
-                {'targetStage' in action.payload && (
-                  <span style={{ fontSize: '0.875rem', color: '#6366f1' }}>
-                    → {String(action.payload.targetStage)}
-                  </span>
-                )}
+                <span style={{ fontSize: '0.875rem', color: '#6366f1' }}>
+                  → {contract.targetStage}
+                </span>
               </div>
               <div style={{ fontSize: '0.875rem', color: '#444', marginBottom: '0.25rem' }}>
-                {action.reason}
+                {contract.humanReadableNote}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.25rem' }}>
+                Event: {contract.internalReason.eventType} ({contract.internalReason.eventId})
               </div>
               <div style={{ fontSize: '0.75rem', color: '#888' }}>
-                {new Date(action.createdAt).toLocaleString()}
+                {new Date(contract.createdAt).toLocaleString()}
               </div>
             </section>
           ))}

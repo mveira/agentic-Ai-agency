@@ -4,12 +4,14 @@ import { createHash } from 'node:crypto';
 /**
  * Mock LLM adapter for testing and development.
  * Returns deterministic outputs based on prompt hash.
+ * Always returns isDryRun: true since no real API is called.
  */
 export class MockLLMAdapter implements LLMAdapter {
   readonly name = 'mock';
 
   private responses: Map<string, string> = new Map();
   private defaultTokenMultiplier = 0.5; // Output tokens as fraction of input
+  private callCount = 0;
 
   /**
    * Register a canned response for a specific prompt pattern.
@@ -27,12 +29,13 @@ export class MockLLMAdapter implements LLMAdapter {
 
   async complete(params: LLMCompletionParams): Promise<LLMCompletionResult> {
     const { prompt, maxTokens } = params;
+    this.callCount++;
 
     // Calculate fake token counts based on prompt length
     // Roughly 4 characters per token
-    const inputTokens = Math.ceil(prompt.length / 4);
-    const outputTokens = Math.min(
-      Math.ceil(inputTokens * this.defaultTokenMultiplier),
+    const tokensIn = Math.ceil(prompt.length / 4);
+    const tokensOut = Math.min(
+      Math.ceil(tokensIn * this.defaultTokenMultiplier),
       maxTokens
     );
 
@@ -40,22 +43,28 @@ export class MockLLMAdapter implements LLMAdapter {
     for (const [pattern, response] of this.responses) {
       if (prompt.includes(pattern)) {
         return {
-          content: response,
-          inputTokens,
-          outputTokens: Math.ceil(response.length / 4),
-          model: 'mock',
+          text: response,
+          tokensIn,
+          tokensOut: Math.ceil(response.length / 4),
+          latencyMs: 0,
+          requestId: `mock-${this.callCount}`,
+          model: 'mock', // Always return 'mock' for consistent test behavior
+          isDryRun: true,
         };
       }
     }
 
     // Generate deterministic default response
-    const content = this.generateDeterministicResponse(prompt);
+    const text = this.generateDeterministicResponse(prompt);
 
     return {
-      content,
-      inputTokens,
-      outputTokens,
-      model: 'mock',
+      text,
+      tokensIn,
+      tokensOut,
+      latencyMs: 0,
+      requestId: `mock-${this.callCount}`,
+      model: 'mock', // Always return 'mock' for consistent test behavior
+      isDryRun: true,
     };
   }
 

@@ -309,26 +309,27 @@ export const proposalActions = pgTable('proposal_actions', {
 /**
  * CRM action contract status enum.
  */
-export const crmContractStatusEnum = pgEnum('crm_contract_status', [
+export const pipelineContractStatusEnum = pgEnum('pipeline_contract_status', [
   'PENDING',
   'APPLIED',
-  'FAILED',
+  'REJECTED',
 ]);
 
 /**
- * CRM action contracts table — pending CRM actions produced by the pipeline router.
+ * Pipeline action contracts table — stage-move contracts emitted by the pipeline router.
+ * Contracts are stored as PENDING and manually applied or rejected during pilot.
  */
-export const crmActionContracts = pgTable('crm_action_contracts', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const pipelineActionContracts = pgTable('pipeline_action_contracts', {
+  contractId: uuid('contract_id').primaryKey().defaultRandom(),
   projectId: uuid('project_id')
     .references(() => projects.id)
     .notNull(),
-  contactId: varchar('contact_id', { length: 255 }).notNull(),
-  actionType: varchar('action_type', { length: 50 }).notNull(),
-  payload: jsonb('payload').notNull(),
-  status: crmContractStatusEnum('status').notNull().default('PENDING'),
-  reason: text('reason').notNull(),
-  failureReason: text('failure_reason'),
+  targetStage: varchar('target_stage', { length: 50 }).notNull(),
+  actionType: varchar('action_type', { length: 50 }).notNull().default('MOVE_STAGE'),
+  humanReadableNote: text('human_readable_note').notNull(),
+  internalReason: jsonb('internal_reason').notNull(),
+  idempotencyKey: varchar('idempotency_key', { length: 255 }).unique().notNull(),
+  status: pipelineContractStatusEnum('status').notNull().default('PENDING'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -351,5 +352,5 @@ export type ProposalReview = typeof proposalReviews.$inferSelect;
 export type NewProposalReview = typeof proposalReviews.$inferInsert;
 export type ProposalAction = typeof proposalActions.$inferSelect;
 export type NewProposalAction = typeof proposalActions.$inferInsert;
-export type CRMActionContractRow = typeof crmActionContracts.$inferSelect;
-export type NewCRMActionContractRow = typeof crmActionContracts.$inferInsert;
+export type PipelineActionContractRow = typeof pipelineActionContracts.$inferSelect;
+export type NewPipelineActionContractRow = typeof pipelineActionContracts.$inferInsert;

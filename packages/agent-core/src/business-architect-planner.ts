@@ -123,7 +123,7 @@ export class BusinessArchitectPlanner {
     // 5. Parse and validate output
     let parsed;
     try {
-      parsed = JSON.parse(llmResult.content);
+      parsed = JSON.parse(llmResult.text);
     } catch {
       return {
         success: false,

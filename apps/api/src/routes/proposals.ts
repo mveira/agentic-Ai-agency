@@ -23,9 +23,10 @@ import {
   InMemoryProposalStore,
   InMemoryProposalStrapiProvider,
   InMemoryRequirementsProvider,
-  buildProposalSentCRMAction,
-  buildProposalApprovedCRMAction,
   createMockRouter,
+  computePipelineAction,
+  InMemoryPipelineContractStore,
+  PipelineEventType,
 } from '@agency/agent-core';
 import type { MockLLMAdapter } from '@agency/agent-core';
 import { join, dirname } from 'node:path';
@@ -39,6 +40,7 @@ const QUESTIONS_PATH = join(__dirname, '../../../../../agency-questions/question
 const requirementsProvider = new InMemoryRequirementsProvider();
 export const proposalStore = new InMemoryProposalStore();
 const strapiProvider = new InMemoryProposalStrapiProvider();
+export const pipelineContractStore = new InMemoryPipelineContractStore();
 
 // Pre-populate a test project for development
 requirementsProvider.set(
@@ -447,13 +449,34 @@ proposalRouter.post('/:id/proposals/:proposalVersionId/mark-sent', async (c) => 
     action: 'SENT',
   });
 
-  // Build CRM action contract (emit, don't execute)
-  const crmAction = buildProposalSentCRMAction(projectId, proposalVersionId);
+  // Compute Pipeline Action Contract (v2)
+  const eventId = crypto.randomUUID();
+  const pipelineAction = computePipelineAction({
+    projectId,
+    eventId,
+    triggeringEvent: PipelineEventType.PROPOSAL_MARKED_SENT,
+    relatedIds: { proposalVersionId },
+  });
+
+  // Store contract as PENDING
+  let storedContract;
+  if (pipelineAction) {
+    try {
+      storedContract = pipelineContractStore.insert(pipelineAction);
+    } catch (error) {
+      // Idempotency key collision — contract already exists
+      if (error instanceof Error && error.message.includes('Duplicate idempotency key')) {
+        // Contract already processed, continue
+      } else {
+        throw error;
+      }
+    }
+  }
 
   return c.json({
     status: 'success',
     proposalStatus: 'SENT',
-    crmAction,
+    pipelineContract: storedContract ?? pipelineAction,
   });
 });
 
@@ -494,13 +517,34 @@ proposalRouter.post(
       metaJson: { clientUserId: body.clientUserId },
     });
 
-    // Build CRM action contract (emit, don't execute)
-    const crmAction = buildProposalApprovedCRMAction(projectId, proposalVersionId);
+    // Compute Pipeline Action Contract (v2)
+    const eventId = crypto.randomUUID();
+    const pipelineAction = computePipelineAction({
+      projectId,
+      eventId,
+      triggeringEvent: PipelineEventType.PROPOSAL_CLIENT_APPROVED,
+      relatedIds: { proposalVersionId, clientUserId: body.clientUserId },
+    });
+
+    // Store contract as PENDING
+    let storedContract;
+    if (pipelineAction) {
+      try {
+        storedContract = pipelineContractStore.insert(pipelineAction);
+      } catch (error) {
+        // Idempotency key collision — contract already exists
+        if (error instanceof Error && error.message.includes('Duplicate idempotency key')) {
+          // Contract already processed, continue
+        } else {
+          throw error;
+        }
+      }
+    }
 
     return c.json({
       status: 'success',
       proposalStatus: 'APPROVED',
-      crmAction,
+      pipelineContract: storedContract ?? pipelineAction,
     });
   }
 );
