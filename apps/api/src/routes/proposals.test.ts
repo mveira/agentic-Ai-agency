@@ -345,11 +345,12 @@ describe('POST /api/projects/:id/proposals/:proposalVersionId/mark-sent', () => 
     const body = await res.json();
     expect(body.status).toBe('success');
     expect(body.proposalStatus).toBe('SENT');
-    expect(body.crmAction).toBeDefined();
-    expect(body.crmAction.event).toBe('proposal.sent');
-    expect(body.crmAction.projectId).toBe(TEST_PROJECT_ID);
-    expect(body.crmAction.proposalVersionId).toBe(proposalId);
-    expect(body.crmAction.crmActions.moveStage).toBe('Proposal sent');
+    expect(body.pipelineContract).toBeDefined();
+    expect(body.pipelineContract.projectId).toBe(TEST_PROJECT_ID);
+    expect(body.pipelineContract.targetStage).toBe('PROPOSAL_SENT');
+    expect(body.pipelineContract.actionType).toBe('MOVE_STAGE');
+    expect(body.pipelineContract.internalReason.eventType).toBe('PROPOSAL_MARKED_SENT');
+    expect(body.pipelineContract.internalReason.relatedIds.proposalVersionId).toBe(proposalId);
   });
 
   it('fails without approved review', async () => {
@@ -395,12 +396,13 @@ describe('POST /api/projects/:id/proposals/:proposalVersionId/approve', () => {
     const body = await res.json();
     expect(body.status).toBe('success');
     expect(body.proposalStatus).toBe('APPROVED');
-    expect(body.crmAction).toBeDefined();
-    expect(body.crmAction.event).toBe('proposal.approved');
-    expect(body.crmAction.projectId).toBe(TEST_PROJECT_ID);
-    expect(body.crmAction.proposalVersionId).toBe(proposalId);
-    expect(body.crmAction.crmActions.moveStage).toBe('Won');
-    expect(body.crmAction.crmActions.triggerWorkflow).toBe('proposal-won-notification');
+    expect(body.pipelineContract).toBeDefined();
+    expect(body.pipelineContract.projectId).toBe(TEST_PROJECT_ID);
+    expect(body.pipelineContract.targetStage).toBe('WON');
+    expect(body.pipelineContract.actionType).toBe('MOVE_STAGE');
+    expect(body.pipelineContract.internalReason.eventType).toBe('PROPOSAL_CLIENT_APPROVED');
+    expect(body.pipelineContract.internalReason.relatedIds.proposalVersionId).toBe(proposalId);
+    expect(body.pipelineContract.internalReason.relatedIds.clientUserId).toBe(TEST_CLIENT_USER_ID);
   });
 
   it('requires clientUserId (authentication check)', async () => {
