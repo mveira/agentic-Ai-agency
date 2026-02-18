@@ -20,6 +20,7 @@ import {
   type BuildPlan,
   type BuildTask,
 } from './build-schemas.js';
+import { loadSkills, type LoadedSkill, type SkillId } from './skills/index.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -202,6 +203,19 @@ export class BuildOrchestrator {
     }
     const blueprint = blueprintParsed.data;
 
+    // ── Load applied skills (if any) for QC context ──
+    let loadedSkills: LoadedSkill[] = [];
+    const appliedSkills = blueprint.applied_skills ?? [];
+    if (appliedSkills.length > 0) {
+      try {
+        const skillIds = appliedSkills.map((s) => s.skillId as SkillId);
+        loadedSkills = await loadSkills(skillIds);
+      } catch (err) {
+        // Skills loading failure is non-fatal — QC proceeds without skill context
+        loadedSkills = [];
+      }
+    }
+
     // ── Step 2: UX Design ──
     const uxResult = await this.runPipelineStep(
       PIPELINE_STEPS[1]!,
@@ -253,11 +267,21 @@ export class BuildOrchestrator {
     const copyPack = copyParsed.data;
 
     // ── Step 4: Quality Control ──
+    const skillContext = loadedSkills.length > 0
+      ? {
+          appliedSkills: loadedSkills.map((s) => ({
+            id: s.id,
+            name: s.name,
+            checklists: s.checklists,
+            qcTests: s.qcTests,
+          })),
+        }
+      : {};
     const qcResult = await this.runPipelineStep(
       PIPELINE_STEPS[3]!,
       input,
       telemetry,
-      { blueprint, uiSpec, copyPack }
+      { blueprint, uiSpec, copyPack, ...skillContext }
     );
     if (!qcResult.success || !qcResult.output) {
       return {
@@ -353,7 +377,7 @@ export function assembleBuildPlan(
   blueprint: MarketingBlueprint,
   uiSpec: UXUISpec,
   copyPack: CopyPack,
-  qcReport: { approved: boolean; violations: Array<{ severity: string; description: string; location: string }>; blockReason?: string } | undefined,
+  qcReport: { approved: boolean; violations: Array<{ severity: string; description: string; location: string }>; blockReason?: string; skill_compliance?: Array<{ skillId: string; passed: boolean; violations: string[] }> } | undefined,
   telemetry: TelemetryEntry[]
 ): BuildPlan {
   // Strip optional copy from core
@@ -409,6 +433,7 @@ export function assembleBuildPlan(
             location: v.location,
           })),
           blockReason: qcReport.blockReason,
+          skill_compliance: qcReport.skill_compliance ?? [],
         }
       : undefined,
     telemetry,

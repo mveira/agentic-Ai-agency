@@ -20,6 +20,8 @@ import {
   RequirementsEngineerAgentInputSchema,
   ProposalStrategistAgentInputSchema,
   shouldBlock,
+  StrategyFunnelAgentOutputSchema,
+  QualityControlAgentOutputSchema,
 } from './contracts/index.js';
 
 describe('Agent Contracts', () => {
@@ -497,5 +499,132 @@ describe('QC Blocking Logic', () => {
   it('does not block on suggestions', () => {
     const violations = [{ severity: 'suggestion' as const }];
     expect(shouldBlock(violations, true)).toBe(false);
+  });
+});
+
+describe('Strategy Output — applied_skills', () => {
+  const validStrategyOutput = {
+    result: {
+      funnelArchitecture: {
+        stages: [
+          {
+            name: 'Landing',
+            funnelPosition: 'tofu',
+            awarenessLevel: 'problem-aware',
+            goal: 'Capture leads',
+            contentType: 'landing-page',
+            cta: 'Sign up',
+          },
+        ],
+        conversionPath: ['Visit landing', 'Fill form'],
+      },
+      offerPositioning: {
+        valueEquation: {
+          dreamOutcome: 'Scale revenue',
+          perceivedLikelihood: ['Case study'],
+          timeDelay: '30 days',
+          effortSacrifice: 'Minimal setup',
+        },
+      },
+      objectionHandling: [
+        { objection: 'Too expensive', strategy: 'ROI comparison', proofRequired: 'Case study' },
+      ],
+      proofRequirements: [
+        { type: 'testimonial', description: 'Founder testimonial', priority: 'required' },
+      ],
+      applied_skills: [
+        { skillId: 'security/v1', rationale: 'Public website' },
+      ],
+    },
+    assumptions: [],
+    unknowns: [],
+    next_actions: [],
+  };
+
+  it('validates applied_skills with correct skill ids', () => {
+    const result = StrategyFunnelAgentOutputSchema.safeParse(validStrategyOutput);
+    expect(result.success).toBe(true);
+  });
+
+  it('defaults applied_skills to empty array when absent', () => {
+    const { applied_skills: _, ...resultWithout } = validStrategyOutput.result;
+    const output = { ...validStrategyOutput, result: resultWithout };
+    const result = StrategyFunnelAgentOutputSchema.safeParse(output);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.result.applied_skills).toEqual([]);
+    }
+  });
+
+  it('rejects invalid skill id format', () => {
+    const badOutput = {
+      ...validStrategyOutput,
+      result: {
+        ...validStrategyOutput.result,
+        applied_skills: [
+          { skillId: 'security/vx', rationale: 'Bad format' },
+        ],
+      },
+    };
+    const result = StrategyFunnelAgentOutputSchema.safeParse(badOutput);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('QC Output — skill_compliance', () => {
+  const validQCOutput = {
+    result: {
+      approved: true,
+      overallScore: 95,
+      violations: [],
+      frameworkCompliance: [
+        { framework: 'offer-economics', compliant: true, score: 95, notes: 'Good' },
+      ],
+      checklist: [{ item: 'All proof elements used', passed: true }],
+      recommendations: [],
+      skill_compliance: [
+        { skillId: 'security/v1', passed: true, violations: [] },
+      ],
+    },
+    assumptions: [],
+    unknowns: [],
+    next_actions: [],
+  };
+
+  it('validates skill_compliance when present', () => {
+    const result = QualityControlAgentOutputSchema.safeParse(validQCOutput);
+    expect(result.success).toBe(true);
+  });
+
+  it('defaults skill_compliance to empty array when absent', () => {
+    const { skill_compliance: _, ...resultWithout } = validQCOutput.result;
+    const output = { ...validQCOutput, result: resultWithout };
+    const result = QualityControlAgentOutputSchema.safeParse(output);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.result.skill_compliance).toEqual([]);
+    }
+  });
+
+  it('accepts skill-violation as a violation category', () => {
+    const output = {
+      ...validQCOutput,
+      result: {
+        ...validQCOutput.result,
+        violations: [
+          {
+            id: 'v-1',
+            severity: 'major',
+            category: 'skill-violation',
+            description: 'Missing security headers',
+            location: 'blueprint',
+            ruleViolated: 'security/v1 — HSTS required',
+            remediation: 'Add HSTS header config',
+          },
+        ],
+      },
+    };
+    const result = QualityControlAgentOutputSchema.safeParse(output);
+    expect(result.success).toBe(true);
   });
 });

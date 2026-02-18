@@ -56,6 +56,7 @@ export function createMockBlueprintOutput(): AgentOutput {
         impact: 'medium',
       },
     ],
+    applied_skills: [],
   };
 
   return {
@@ -187,6 +188,7 @@ export function createMockQCPassOutput(): AgentOutput {
   const qcReport: QCReport = {
     approved: true,
     violations: [],
+    skill_compliance: [],
   };
 
   return {
@@ -211,6 +213,7 @@ export function createMockQCBlockOutput(): AgentOutput {
       },
     ],
     blockReason: 'Optional content leaked into core build plan',
+    skill_compliance: [],
   };
 
   return {

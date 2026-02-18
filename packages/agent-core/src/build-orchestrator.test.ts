@@ -11,6 +11,7 @@ import {
   createMockBlueprintOutput,
   createMockUXUISpecOutput,
   createMockCopyPackOutput,
+  createMockQCPassOutput,
   createMockQCBlockOutput,
   registerBuildMocks,
 } from './build-mocks.js';
@@ -424,6 +425,71 @@ describe('assembleBuildPlan (Mode B Enforcement)', () => {
   it('produces a schema-valid BuildPlan', () => {
     const plan = assembleBuildPlan('proj-1', 'v1', blueprint, uiSpec, copyPack, qcReport, []);
     expect(BuildPlanSchema.safeParse(plan).success).toBe(true);
+  });
+});
+
+describe('Skills Integration', () => {
+  let requirements: InMemoryRequirementsProvider;
+
+  beforeEach(() => {
+    requirements = new InMemoryRequirementsProvider();
+    requirements.set(PROJECT_ID, VERSION_ID, {
+      exists: true,
+      assumptionsApproved: true,
+      data: { goal: 'Generate leads' },
+    });
+  });
+
+  it('pipeline works when applied_skills is empty/absent', async () => {
+    const orchestrator = createOrchestrator(requirements);
+    const result = await orchestrator.execute(createDefaultInput());
+
+    // The mock blueprint has no applied_skills, so pipeline proceeds normally
+    expect(result.status).toBe('success');
+    expect(result.buildPlan).toBeDefined();
+  });
+
+  it('pipeline works when blueprint includes applied_skills', async () => {
+    const router = createMockRouter();
+    const routed = router.route({
+      agentId: 'strategy-funnel-agent',
+      estimatedInputTokens: 100,
+      estimatedOutputTokens: 100,
+    });
+    const adapter = routed.adapter as MockLLMAdapter;
+
+    // Create blueprint with applied_skills
+    const blueprintOutput = createMockBlueprintOutput();
+    const blueprintWithSkills = {
+      ...blueprintOutput,
+      result: {
+        ...blueprintOutput.result,
+        applied_skills: [
+          { skillId: 'security/v1', rationale: 'Public website' },
+        ],
+      },
+    };
+
+    adapter.registerResponse('strategy-funnel-agent', JSON.stringify(blueprintWithSkills));
+    adapter.registerResponse('ux-design-agent', JSON.stringify(createMockUXUISpecOutput()));
+    adapter.registerResponse('copy-messaging-agent', JSON.stringify(createMockCopyPackOutput()));
+    adapter.registerResponse('quality-control-agent', JSON.stringify(createMockQCPassOutput()));
+
+    const orchestrator = new BuildOrchestrator({
+      runnerConfig: {
+        questionsPath: QUESTIONS_PATH,
+        globalRules: [],
+        router,
+        enforceQC: false,
+      },
+      requirements,
+    });
+
+    const result = await orchestrator.execute(createDefaultInput());
+
+    expect(result.status).toBe('success');
+    expect(result.buildPlan).toBeDefined();
+    expect(result.telemetry).toHaveLength(4);
   });
 });
 

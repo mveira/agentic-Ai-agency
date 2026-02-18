@@ -363,6 +363,15 @@ export type {
 export { PMEngine, withPMMetrics } from './pm-engine.js';
 export type { PMDataProvider, PMEngineConfig, PMComputeMetrics } from './pm-engine.js';
 
+// Skills
+export {
+  loadSkill,
+  loadSkills,
+  SkillNotFoundError,
+  InvalidSkillIdError,
+} from './skills/index.js';
+export type { SkillId, LoadedSkill } from './skills/index.js';
+
 // Pipeline Router
 export {
   PipelineStageNameSchema,

@@ -107,6 +107,10 @@ export const StrategyFunnelAgentOutputSchema = z.object({
         priority: z.enum(['required', 'recommended', 'optional']),
       })
     ),
+    applied_skills: z.array(z.object({
+      skillId: z.string().regex(/^[a-z][a-z0-9-]*\/v\d+$/, 'Must be in format "{name}/v{version}"'),
+      rationale: z.string(),
+    })).default([]),
   }),
   assumptions: z.array(z.string()),
   unknowns: z.array(z.string()),

@@ -38,6 +38,15 @@ export type {
   StrategyFunnelAgentOutput,
 } from './strategy-funnel-agent.js';
 
+// Skill types (re-exported for convenience)
+export {
+  loadSkill,
+  loadSkills,
+  SkillNotFoundError,
+  InvalidSkillIdError,
+} from '../skills/index.js';
+export type { SkillId, LoadedSkill } from '../skills/index.js';
+
 // Copy Messaging Agent
 export {
   COPY_MESSAGING_AGENT_CONTRACT,

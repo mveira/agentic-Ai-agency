@@ -191,6 +191,26 @@ describe('MarketingBlueprintSchema', () => {
     const result = MarketingBlueprintSchema.safeParse({ ...validBlueprint, successCriteria: [] });
     expect(result.success).toBe(false);
   });
+
+  it('defaults applied_skills to empty array when absent', () => {
+    const result = MarketingBlueprintSchema.parse(validBlueprint);
+    expect(result.applied_skills).toEqual([]);
+  });
+
+  it('validates applied_skills when present', () => {
+    const withSkills = {
+      ...validBlueprint,
+      applied_skills: [
+        { skillId: 'security/v1', rationale: 'Public website needs hardening' },
+        { skillId: 'psychology/v1', rationale: 'Conversion optimization' },
+      ],
+    };
+    const result = MarketingBlueprintSchema.safeParse(withSkills);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.applied_skills).toHaveLength(2);
+    }
+  });
 });
 
 describe('UXUISpecSchema', () => {
@@ -260,6 +280,27 @@ describe('QCReportSchema', () => {
       blockReason: 'Optional content leaked into core',
     };
     expect(QCReportSchema.safeParse(report).success).toBe(true);
+  });
+
+  it('defaults skill_compliance to empty array when absent', () => {
+    const result = QCReportSchema.parse({ approved: true, violations: [] });
+    expect(result.skill_compliance).toEqual([]);
+  });
+
+  it('validates skill_compliance when present', () => {
+    const report = {
+      approved: true,
+      violations: [],
+      skill_compliance: [
+        { skillId: 'security/v1', passed: true, violations: [] },
+        { skillId: 'psychology/v1', passed: false, violations: ['Missing trust signals'] },
+      ],
+    };
+    const result = QCReportSchema.safeParse(report);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.skill_compliance).toHaveLength(2);
+    }
   });
 });
 

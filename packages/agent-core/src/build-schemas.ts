@@ -110,6 +110,10 @@ export const MarketingBlueprintSchema = z.object({
       impact: z.enum(['low', 'medium', 'high']),
     })
   ),
+  applied_skills: z.array(z.object({
+    skillId: z.string(),
+    rationale: z.string(),
+  })).default([]),
 });
 
 export type MarketingBlueprint = z.infer<typeof MarketingBlueprintSchema>;
@@ -184,6 +188,11 @@ export const QCReportSchema = z.object({
     })
   ),
   blockReason: z.string().optional(),
+  skill_compliance: z.array(z.object({
+    skillId: z.string(),
+    passed: z.boolean(),
+    violations: z.array(z.string()),
+  })).default([]),
 });
 
 export type QCReport = z.infer<typeof QCReportSchema>;
