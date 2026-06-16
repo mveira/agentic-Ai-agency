@@ -1631,3 +1631,28 @@ Use this template for every task. A task cannot be marked DONE unless 'Tests add
   - No runtime behaviour changed
 
 ---
+
+## 2026-06-16 — Site engagement: Kington Design & Build (Phase A)
+
+- **Task:** Bootstrap Kington Design & Build website engagement (Pattern B per `docs/knowledge/website-build-playbook.md`)
+- **Status:** DOING (scaffold + dossier landed; awaiting client requirements doc for content phase)
+- **Files touched:**
+  - `docs/features/site-kington-design-and-build.md` (new, Phase A)
+  - SPYN repo: `docs/08-operations/clients/kington-design-and-build/` (new, 5 files) + `docs/09-decisions/in-flight.md` (1 row appended)
+  - Standalone repo `mveira/kingtonD-B`: initial scaffold pushed to `feat/initial-scaffold-2026-06-16` (61 files, lifted from `~/Development/agentic-agency/site-c-through-exteriors/`)
+- **Tests added/updated:**
+  - C-Through `lib/*.test.ts` stripped during scaffold copy (referenced C-Through data); will be rebuilt against Kington data once requirements arrive
+- **Commands run:**
+  - `gh repo clone mveira/kingtonD-B site-kington-design-and-build`
+  - `rsync` from C-Through standalone (excluding tests, content data, image binaries, env.local)
+  - `pnpm install` (Done in 12.8s)
+  - `pnpm typecheck` (exit 0)
+  - `git push -u origin feat/initial-scaffold-2026-06-16`
+- **Notes / blockers:**
+  - GitHub default branch is `feat/initial-scaffold-2026-06-16` because main was never created on the empty repo. Marcus to rename to `main` via GitHub Settings (classifier blocks direct main push, correctly).
+  - Two C-Through-client email leaks caught and scrubbed during scaffold: `.env.example LEAD_EMAIL_TO=robbiewinstone1@gmail.com` and `app/api/lead/route.ts DEFAULT_LEAD_RECIPIENT` const.
+  - Brand palette in `app/globals.css` is the C-Through placeholder pending Kington accent-colour decision (logo monochrome).
+  - Prior 2025 Kington scaffold at `~/Desktop/projects/kington/kington-build-design/` (Next 15 / React 19) treated as content reference only (decision logged below).
+  - Awaiting full requirements doc from Marcus.
+
+---

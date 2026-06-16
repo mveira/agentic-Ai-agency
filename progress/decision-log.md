@@ -736,3 +736,31 @@ Use this format for all architectural and technical decisions:
 - **Status:** Approved
 
 ---
+
+## 2026-06-16 — Kington site: fresh scaffold vs continuing prior 2025 build
+
+- **Decision:** Fresh build from C-Through standalone scaffold (Pattern B per playbook). Treat prior `~/Desktop/projects/kington/kington-build-design/` (Next 15 / React 19, last commit Oct 2025) as content reference only.
+- **Reason:**
+  - C-Through pattern is the documented playbook target — copying components + admin CMS wholesale gives a faster, more consistent build than auditing + rehabilitating the Oct-2025 scaffold.
+  - Stack drift: prior scaffold on Next 15 / React 19, playbook on Next 14 / React 18.3. Half the C-Through traps don't apply on 19, but the playbook traps file is the codified hard-won knowledge — staying on the playbook stack preserves direct traps re-use.
+- **Alternatives considered:**
+  - Continue Oct-2025 scaffold in place (rejected — would diverge from the playbook stack + lose the C-Through component reuse)
+  - Fresh build on Next 15 / React 19 to match prior (rejected — playbook hasn't been validated on 15/19 yet; first multi-engagement use of the playbook should stay on the proven stack)
+- **Impact:**
+  - Prior scaffold's contact details (07788 433 120, info@kingtondesignbuild.co.uk) lifted into `lib/brand.ts` as starting placeholders
+  - Prior scaffold's service list (project-management, structural, roof-repairs, tiling) used as `lib/services.ts` placeholders pending client confirmation
+- **Status:** Approved (Marcus 2026-06-16)
+
+## 2026-06-16 — Kington site: skip monorepo→subtree-split phase, work in standalone from day one
+
+- **Decision:** Clone empty `mveira/kingtonD-B` and scaffold directly into it. Skip the playbook's "scaffold in `apps/site-<slug>/` then subtree-split to standalone" phase.
+- **Reason:**
+  - The playbook's monorepo-first phase exists because the standalone repo is usually created at the end via `gh repo create`. Here Marcus pre-created the GitHub repo, so the monorepo phase is redundant overhead — clone-and-work is one fewer git-history-rewriting step.
+- **Alternatives considered:**
+  - Strict playbook (scaffold in `apps/site-kington-design-and-build/`, subtree-split to standalone, push) — rejected as unnecessary friction given the empty repo already exists
+- **Impact:**
+  - agency-agents repo does NOT get an `apps/site-kington-design-and-build/` mirror; Feature Record + session log + KB promotions are the only agency-agents-side artefacts
+  - Update `website-build-playbook.md` "Repo extraction (Pattern B)" section after engagement to document this branch ("when the GitHub repo is pre-created, clone-and-work directly")
+- **Status:** Approved (Marcus 2026-06-16)
+
+---
