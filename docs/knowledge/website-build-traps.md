@@ -159,6 +159,36 @@ Document the limitation in the runbook the moment the CMS lands; don't
 let it discover-in-production.
 **First hit**: `c-through-exteriors-2026-06-15` — documented in runbook
 as a Phase-3 enhancement.
+**Resolution**: solved on `kington-design-and-build-2026-06-16` via
+`lib/github-content.ts` + the `useGitHub = github.isConfigured()` swap
+inside `lib/content-write.ts`. When `GITHUB_TOKEN` is set, admin saves
+PUT to the Contents API and Vercel's git integration auto-redeploys.
+
+### T-N4 — `next/image` won't optimize `data:` URLs — opt out with `unoptimized`
+**Root cause**: Storing CMS images inline (base64 data URLs in JSON)
+is fine, but `next/image` cannot run its optimizer over a data URL.
+Without intervention you get a runtime warning and the image silently
+falls back to the raw `<img>` rendered through a 1×1 transparent
+placeholder.
+**Do**: At every `<Image>` consumer of admin-managed assets, add
+`unoptimized={src.startsWith('data:')}`. Path-based assets still go
+through the pipeline; data URLs skip it. Touch every consumer
+(`before-after-preview.tsx`, `portfolio/page.tsx`,
+`gallery-section`, admin list views).
+**First hit**: `kington-design-and-build-2026-06-16`.
+
+### T-N5 — Don't store originals as base64 in JSON; resize client-side first
+**Root cause**: A single 12 MP phone photo encodes to ~6 MB of base64
+in JSON. Ten portfolio entries × 2 images each + a gallery doubles
+your repo size + every Vercel build downloads the whole JSON. Easy
+to ship by accident if you `FileReader.readAsDataURL` the raw file.
+**Do**: Resize on the client before encoding — `createImageBitmap` →
+canvas → `toDataURL('image/jpeg', 0.85)`, long edge capped at 1400 px.
+Typical phone photo lands at ~250 KB. Reference: `_form.tsx`'s
+`resizeToDataUrl` helper in both `app/admin/before-after/` and
+`app/admin/gallery/`.
+**First hit**: `kington-design-and-build-2026-06-16` — caught at the
+schema-design stage; never shipped raw originals.
 
 ---
 

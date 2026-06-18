@@ -117,6 +117,8 @@ All under `app/(marketing)/_components/`:
 - `faq-schema.tsx` + visible `<FaqList>`
 - `analytics.tsx` (Meta Pixel + GA4, gated by consent)
 - `cookie-banner.tsx` (UK GDPR / PECR accept/reject)
+- `gallery-section` block in `app/portfolio/page.tsx` (multi-image
+  project rendering; admin lives at `/admin/gallery`)
 
 ## SEO + LLM-SEO baseline
 
@@ -246,28 +248,61 @@ Pattern:
 - **Recovery**: rotate `ADMIN_PASSWORD` in Vercel env vars. Optionally
   rotate `ADMIN_COOKIE_SECRET` too to invalidate all active sessions.
 
-## Admin CMS (lightweight)
+## Admin image uploads + inline storage
 
-Reference implementation: see `lib/admin-auth.ts` + `lib/content-write.ts`
-+ `middleware.ts` + `app/admin/**` in the C Through Exteriors repo.
+Reference implementation: `app/admin/before-after/_form.tsx` (single
+image pair) and `app/admin/gallery/_form.tsx` (multi-image variant).
 
 Pattern:
 
-- **Auth**: `ADMIN_PASSWORD` env var + HMAC-SHA256 signed cookie via
-  Web Crypto. Works in Edge runtime (middleware) and Node (server
-  actions). 7-day session TTL. Constant-time string compare for both
-  password and signature checks.
-- **Middleware** guards `/admin/**` except `/admin/login`; redirects
-  with `?next=` to preserve destination.
-- **Server actions** use Next 14's `useFormState` + `useFormStatus`
-  (React 18.3). **Not `useActionState`** (that's React 19).
-- **Login page** wraps the form in `<Suspense>` because
-  `useSearchParams()` forces CSR-bailout on prerender.
-- **Persistence** writes JSON via `node:fs` — works in `next dev`,
-  fails on Vercel serverless (read-only fs). Phase-3 enhancement:
-  commit via GitHub API.
-- **Recovery**: rotate `ADMIN_PASSWORD` in Vercel env vars. Optionally
-  rotate `ADMIN_COOKIE_SECRET` too to invalidate all active sessions.
+- **Picker**: hidden `<input type="file" accept="image/*">` (optional
+  `multiple`) surfaced via a styled "Choose image" pill. The selected
+  file is processed entirely client-side — no upload-then-store dance.
+- **Resize**: `createImageBitmap(file)` → draw to canvas with long
+  edge capped at **1400 px** → `canvas.toDataURL('image/jpeg', 0.85)`.
+  Always re-encodes as JPEG; PNG balloons in base64. A typical 5 MB
+  phone photo lands at ~250 KB.
+- **Storage**: the resulting data URL goes into a hidden
+  `<input>` that the server action reads. Persisted directly inside
+  `content/*.json` — no separate image files, no separate path
+  management. The JSON is the single source of truth.
+- **Editing**: if the admin doesn't re-pick a file, the hidden input
+  keeps the existing data URL (or path); the server action's
+  "update only non-empty patch keys" logic leaves the field intact.
+- **Display**: `next/image` cannot optimize data URLs. Add
+  `unoptimized={src.startsWith('data:')}` on every consumer (e.g.
+  `before-after-preview.tsx`, `portfolio/page.tsx`,
+  `gallery-section`) so path-based assets still go through the
+  pipeline.
+- **Limits**: 20 MB per file pre-resize; 12 images per gallery entry.
+  Anything bigger surfaces an inline error in the form.
+- **Size math**: 10 portfolio entries × 2 images × ~250 KB ≈ **~5 MB
+  JSON**. Git handles it; Vercel rebuilds gain < 10 s. Past ~50 MB
+  reconsider — likely a sign the client wants a real DAM.
+
+## Gallery content type
+
+Sibling of before/after for projects that don't fit a strict pair
+(finished extensions, conversions, single-image flourishes).
+
+- Schema: `{ id, heading, description, images: string[] (1..12),
+  publishedAt }` in `lib/gallery.ts`; mirrored write helpers in
+  `lib/gallery-write.ts` (same fs ↔ GitHub swap as
+  `content-write.ts`).
+- Storage: `content/gallery.json` (separate file so the JSON for
+  each type stays grep-able).
+- Admin: full `/admin/gallery` section — list with 3-thumb preview
+  + "+N more" indicator, new + edit pages, `GalleryForm` with an
+  inline `ImageGalleryField` that supports multi-pick, client-side
+  resize, up/down reorder buttons, remove.
+- Each image gets its own hidden `<input name="images">` so the
+  server action reads them as an ordered array via
+  `formData.getAll('images')`.
+- Public display: `gallery-section` block rendered above the
+  before/after grid on `/portfolio`. Responsive `auto-fill,
+  minmax(220px, 1fr)` image grid with 4:3 cells.
+- Cross-link from `/admin` (hub view shows both content types with
+  counts).
 
 ## Brand-gradient split CTAs
 
@@ -330,6 +365,12 @@ Every engagement runbook MUST include:
 - Lead form attachment upload tested end-to-end: file picker accepts
   images + PDFs, validation surfaces size/count errors, Resend
   delivers the email with attachments inline
+- Admin image upload tested end-to-end on Vercel: pick → resize
+  visible in the meta line → save → confirm new commit in the repo
+  → confirm `/portfolio` reflects the change after redeploy
+- Gallery entry tested with ≥3 images, reorder buttons functioning,
+  data URLs rendering on `/portfolio` without console warnings about
+  Next/Image optimization
 - Theme toggle removed (it's a design tool, not production)
 - Reduced-motion check on the hero entrance animations
 - Photo + logo + testimonials provenance confirmed in writing
