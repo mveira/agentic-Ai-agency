@@ -190,6 +190,20 @@ Typical phone photo lands at ~250 KB. Reference: `_form.tsx`'s
 **First hit**: `kington-design-and-build-2026-06-16` — caught at the
 schema-design stage; never shipped raw originals.
 
+### T-N6 — JSON-LD `AggregateRating` must be verifiable on-page
+**Root cause**: Google's structured-data guidelines explicitly state
+that ratings in `AggregateRating` / `Review` JSON-LD have to match
+something the user can see on the same page. Ship the schema markup
+without the visible rating and Google's Rich Results Test reports a
+warning + the snippet won't appear in search.
+**Do**: Have one source of truth for the rating. `ReviewBadges` and
+`ReviewAggregateSchema` both call `fetchGoogleReviews()`; Next.js
+fetch cache deduplicates so it's effectively one read. Don't
+hard-code a rating in the JSON-LD that isn't also rendered visibly.
+**First hit**: caught at design time on `c-through-exteriors-google-
+reviews-2026-06-20`; trap recorded so future engagements don't try
+to ship the schema before wiring the visible badge.
+
 ---
 
 ## Aesthetic iteration

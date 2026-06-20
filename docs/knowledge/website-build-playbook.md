@@ -119,6 +119,10 @@ All under `app/(marketing)/_components/`:
 - `cookie-banner.tsx` (UK GDPR / PECR accept/reject)
 - `gallery-section` block in `app/portfolio/page.tsx` (multi-image
   project rendering; admin lives at `/admin/gallery`)
+- `review-badges.tsx` (Google Places API-powered card + Trustpilot /
+  Checkatrade manual flips + clamped quote grid)
+- `review-aggregate-schema.tsx` (LocalBusiness `AggregateRating` +
+  `Review[]` JSON-LD, mounted in the root layout)
 
 ## SEO + LLM-SEO baseline
 
@@ -304,6 +308,60 @@ Sibling of before/after for projects that don't fit a strict pair
 - Cross-link from `/admin` (hub view shows both content types with
   counts).
 
+## Google reviews + AggregateRating JSON-LD
+
+Reference implementation: `lib/google-reviews.ts` +
+`app/(marketing)/_components/review-badges.tsx` +
+`app/(marketing)/_components/review-aggregate-schema.tsx` in either
+`site-kington-design-and-build` (`ae5b335`) or
+`site-c-through-exteriors` (`69bd5e3`).
+
+Pattern:
+
+- **`lib/google-reviews.ts`** — tiny `fetch`-based Places API (New)
+  client. One call to
+  `https://places.googleapis.com/v1/places/{place_id}` with the
+  FieldMask `displayName,rating,userRatingCount,googleMapsUri,
+  reviews.{rating,text,relativePublishTimeDescription,authorAttribution}`.
+  Cached via `next: { revalidate: 86400 }` (24h). Exports
+  `fetchGoogleReviews()` returning `GoogleReviewsData | null` and
+  `isGoogleReviewsConfigured()` for early branching.
+- **Graceful degradation**: when `GOOGLE_PLACES_API_KEY` or
+  `GOOGLE_PLACE_ID` is unset, the fetch is skipped entirely (no
+  outbound call, no surprise spend). Callers receive `null` and
+  render TBD placeholders.
+- **`ReviewBadges`** is an async server component. Reads Google
+  data via `fetchGoogleReviews()` and merges with manual platform
+  entries (Trustpilot + Checkatrade kept as static `verified: false`
+  pills for now). When data is present, the 3 most-recent reviews
+  render as a clamped quote grid below the badge row.
+- **`ReviewAggregateSchema`** mounts in the root layout alongside
+  `LocalBusinessSchema` and emits JSON-LD `AggregateRating` +
+  `Review[]` tied to the LocalBusiness. **The rating + count + review
+  text must match what `ReviewBadges` renders on the page** — Google's
+  structured-data guidelines reject ratings that aren't verifiable
+  on-page. Both components read from the same `fetchGoogleReviews()`
+  call (Next.js fetch cache deduplicates), so no drift.
+- **Two outbound calls per request, one cache hit** — layout calls
+  it once for the schema, the home page calls it once for the badge.
+  Both share the same revalidate window. ~1 actual Places API call
+  per deployment per day; well under any free-tier ceiling.
+
+Env vars: `GOOGLE_PLACES_API_KEY`, `GOOGLE_PLACE_ID`.
+
+Setup (3 steps, ~5 minutes):
+1. **Place ID**: search the client's GBP listing at
+   `developers.google.com/maps/documentation/places/web-service/place-id`.
+2. **API key**: `console.cloud.google.com` → enable "Places API
+   (New)" → Credentials → API key. **Restrict** to Places API +
+   the client's domains (production + Vercel `.vercel.app`).
+3. **Vercel env vars**: set both in Production + Preview. Mark the
+   API key Sensitive.
+
+Free tier covers small-marketing-site traffic comfortably. If the
+client crosses ~10k calls/month, raise the revalidate window or add
+a server-side memo.
+
 ## Brand-gradient split CTAs
 
 Two hero buttons sharing one continuous brand gradient:
@@ -371,6 +429,10 @@ Every engagement runbook MUST include:
 - Gallery entry tested with ≥3 images, reorder buttons functioning,
   data URLs rendering on `/portfolio` without console warnings about
   Next/Image optimization
+- `GOOGLE_PLACES_API_KEY` + `GOOGLE_PLACE_ID` set in Vercel and the
+  Google review-badge has flipped from TBD to a real rating; Rich
+  Results Test (`search.google.com/test/rich-results`) shows the
+  `AggregateRating` JSON-LD on the home page without warnings
 - Theme toggle removed (it's a design tool, not production)
 - Reduced-motion check on the hero entrance animations
 - Photo + logo + testimonials provenance confirmed in writing
